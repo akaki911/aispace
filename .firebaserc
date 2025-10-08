@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "aispace-prod"
+  },
+  "targets": {
+    "aispace-prod": {
+      "hosting": {
+        "aispace": [
+          "aispace-prod"
+        ]
+      }
+    }
+  }
+}
