@@ -4,7 +4,7 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@aispace/*": ["./*"]
+      "@aispace/*": ["src/*"]
     },
     "module": "ESNext",
     "moduleResolution": "Node",
