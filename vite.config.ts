@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 const buildTime = new Date().toISOString();
 
-const replaceHealthBuildTime = () => ({
+const replaceHealthBuildTime = (): Plugin => ({
   name: 'replace-health-build-time',
   apply: 'build',
   closeBundle() {

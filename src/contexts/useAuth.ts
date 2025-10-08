@@ -2,6 +2,8 @@ export interface AuthUser {
   id?: string;
   personalId?: string;
   role?: string;
+  email?: string;
+  displayName?: string;
 }
 
 export interface AuthState {

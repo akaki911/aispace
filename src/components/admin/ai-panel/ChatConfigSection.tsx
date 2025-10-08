@@ -126,7 +126,7 @@ export function ChatConfigSection({
               height="260px"
               defaultLanguage="markdown"
               value={activePromptValue}
-              onChange={(value) => onPromptChange(value || '')}
+              onChange={(value: string | undefined) => onPromptChange(value || '')}
               theme="vs-dark"
               options={{
                 minimap: { enabled: false },
