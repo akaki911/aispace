@@ -27,17 +27,37 @@ try {
 }
 
 const buildTime = new Date().toISOString();
+const commitHash = (() => {
+  const candidates = [
+    'GIT_COMMIT_SHA',
+    'GITHUB_SHA',
+    'COMMIT_SHA',
+    'VERCEL_GIT_COMMIT_SHA',
+    'RENDER_GIT_COMMIT',
+  ];
 
-app.get('/api/version', (_req, res) => {
+  for (const key of candidates) {
+    const value = process.env[key];
+    if (value && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+})();
+
+app.get('/version', (_req, res) => {
   res.json({
     name: 'aispace',
     version: appVersion,
     buildTime,
+    commit: commitHash ?? null,
   });
 });
 
-app.get('/api/ai/health', (_req, res) => {
+app.get('/ai/health', (_req, res) => {
   res.json({
+    status: 'ok',
     ok: true,
     service: 'aispace-api',
     time: new Date().toISOString(),
@@ -66,8 +86,8 @@ const githubNotImplemented: express.RequestHandler = (_req, res) => {
   res.status(501).json({ error: 'not_implemented' });
 };
 
-app.get('/api/github/tree', requireGithubSecrets, githubNotImplemented);
-app.get('/api/github/file', requireGithubSecrets, githubNotImplemented);
-app.post('/api/github/pr', requireGithubSecrets, githubNotImplemented);
+app.get('/github/tree', requireGithubSecrets, githubNotImplemented);
+app.get('/github/file', requireGithubSecrets, githubNotImplemented);
+app.post('/github/pr', requireGithubSecrets, githubNotImplemented);
 
-export const api = onRequest({ cors: true }, app);
+export const api = onRequest({ cors: true, region: 'us-central1' }, app);
