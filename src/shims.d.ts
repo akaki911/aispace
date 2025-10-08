@@ -1,0 +1,10 @@
+declare module '@monaco-editor/react';
+declare module '@/contexts/*';
+declare module '@/components/*';
+declare module '@/hooks/*';
+declare module '@/lib/*';
+declare module '@/utils/*';
+declare module '@/services/*';
+declare module '@/state/*';
+declare module '@/features/*';
+declare module '@/pages/*';
