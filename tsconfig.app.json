@@ -5,7 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@aispace/*": ["src/*"],
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@monaco-editor/react": ["src/stubs/monaco-editor-react.tsx"]
     },
     "target": "ESNext",
     "useDefineForClassFields": true,

@@ -1,3 +1,3 @@
-import './src/index.ts';
+import './src';
 
 export * from './src';

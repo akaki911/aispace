@@ -17,7 +17,7 @@ const DEFAULT_CONFIG: MemoryCleanupConfig = {
 
 export const useMemoryManagement = (config: Partial<MemoryCleanupConfig> = {}) => {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const getLocalStorageSize = useCallback(() => {
     let total = 0;
@@ -100,6 +100,7 @@ export const useMemoryManagement = (config: Partial<MemoryCleanupConfig> = {}) =
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [performCleanup, finalConfig.cleanupInterval]);
