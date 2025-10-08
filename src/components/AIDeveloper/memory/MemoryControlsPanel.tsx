@@ -244,6 +244,18 @@ const MemoryList: React.FC<MemoryListProps> = ({
     [selectedIds, visibleMemories],
   );
 
+  const metricLogCount = metrics.logCount ?? 0;
+  const metricErrorCount = metrics.errorCount ?? 0;
+  const metricWarningCount = metrics.warningCount ?? 0;
+  const metricHealthScore = metrics.healthScore ?? 0;
+  const metricAverageConfidence = metrics.averageConfidence ?? 0;
+  const badgeHealthTone: 'emerald' | 'amber' | 'red' =
+    metricHealthScore >= 75
+      ? 'emerald'
+      : metricHealthScore >= 50
+      ? 'amber'
+      : 'red';
+
   const toggleSelection = (memoryId: string, checked: boolean) => {
     if (checked) {
       onSelectionChange(Array.from(new Set([...selectedIds, memoryId])));
@@ -269,8 +281,6 @@ const MemoryList: React.FC<MemoryListProps> = ({
     { value: 'issues', label: 'გაფრთხილება' },
     { value: 'logs', label: 'ლოგი' },
   ];
-
-  const healthTone = metrics.healthScore >= 75 ? 'emerald' : metrics.healthScore >= 50 ? 'amber' : 'red';
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
@@ -330,25 +340,25 @@ const MemoryList: React.FC<MemoryListProps> = ({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <MemoryMetricBadge icon={<Database size={12} />} label="ლოგი" value={metrics.logCount} tone={metrics.logCount > 0 ? 'emerald' : 'slate'} />
-        <MemoryMetricBadge icon={<XCircle size={12} />} label="შეცდომა" value={metrics.errorCount} tone={metrics.errorCount > 0 ? 'red' : 'slate'} />
+        <MemoryMetricBadge icon={<Database size={12} />} label="ლოგი" value={metricLogCount} tone={metricLogCount > 0 ? 'emerald' : 'slate'} />
+        <MemoryMetricBadge icon={<XCircle size={12} />} label="შეცდომა" value={metricErrorCount} tone={metricErrorCount > 0 ? 'red' : 'slate'} />
         <MemoryMetricBadge
           icon={<ShieldCheck size={12} />}
           label="გაფრთხილება"
-          value={metrics.warningCount}
-          tone={metrics.warningCount > 0 ? 'amber' : 'slate'}
+          value={metricWarningCount}
+          tone={metricWarningCount > 0 ? 'amber' : 'slate'}
         />
         <MemoryMetricBadge
           icon={<Activity size={12} />}
           label="ჯანმრთელობა"
-          value={`${metrics.healthScore}%`}
-          tone={healthTone}
+          value={`${metricHealthScore}%`}
+          tone={badgeHealthTone}
         />
         <MemoryMetricBadge
           icon={<BarChart3 size={12} />}
           label="დარწმუნებულობა"
-          value={`${metrics.averageConfidence}%`}
-          tone={metrics.averageConfidence > 74 ? 'emerald' : metrics.averageConfidence > 49 ? 'amber' : 'red'}
+          value={`${metricAverageConfidence}%`}
+          tone={metricAverageConfidence > 74 ? 'emerald' : metricAverageConfidence > 49 ? 'amber' : 'red'}
         />
       </div>
 
@@ -368,7 +378,10 @@ const MemoryList: React.FC<MemoryListProps> = ({
           const confidencePercent = Math.round((confidenceRaw > 1 ? confidenceRaw : confidenceRaw * 100));
           const syncStatus = memory.syncStatus ?? (memory.userConfirmed ? 'synced' : 'pending');
           const syncProgressRaw = typeof memory.syncProgress === 'number' ? memory.syncProgress : undefined;
-          const syncProgress = Math.min(100, Math.max(0, syncProgressRaw ?? (memory.userConfirmed ? 100 : Math.max(60, metrics.averageConfidence - 5))));
+          const syncProgress = Math.min(
+            100,
+            Math.max(0, syncProgressRaw ?? (memory.userConfirmed ? 100 : Math.max(60, metricAverageConfidence - 5))),
+          );
           const usageCount = memory.usageCount ?? memory.conversationCount ?? 0;
           const issuesCount = (memory.errorCount ?? 0) + (memory.warningCount ?? 0);
 
@@ -447,7 +460,7 @@ const MemoryList: React.FC<MemoryListProps> = ({
                     </span>
                   )}
                   {Array.isArray(memory.tags) &&
-                    memory.tags.map((tag) => (
+                    memory.tags.map((tag: string) => (
                       <span
                         key={tag}
                         className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5 uppercase"

@@ -12,7 +12,7 @@ interface MemoryTabProps {
 const MemoryTab: React.FC<MemoryTabProps> = ({ isAuthenticated }) => {
   const { user } = useAuth();
   const { controls, memories, metrics, loading, error, toggleFeature, refresh, saveMemory } = useMemoryControls(
-    isAuthenticated ? user?.personalId : null,
+    isAuthenticated ? user?.personalId ?? null : null,
   );
   const [showExpandedView, setShowExpandedView] = useState(true);
 

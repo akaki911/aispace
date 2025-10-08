@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import Editor from '@monaco-editor/react';
+import { useCallback, type ChangeEvent } from 'react';
+import PromptEditor from './PromptEditor';
 import { motion } from 'framer-motion';
 import { RotateCcw, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/useAuth';
@@ -111,7 +111,7 @@ export function ChatConfigSection({
             </div>
             <select
               value={selectedPromptId}
-              onChange={(event) => onSelectPrompt(event.target.value)}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => onSelectPrompt(event.target.value)}
               className="rounded-2xl border border-[#7C6CFF33] bg-[#1A1F2F]/80 px-3 py-2 text-sm text-[#E6E8EC] outline-none transition focus:outline-none focus:ring-2 focus:ring-[#7C6CFF80]"
             >
               {promptConfigs.map((prompt) => (
@@ -122,21 +122,11 @@ export function ChatConfigSection({
             </select>
           </div>
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
-            <Editor
+            <PromptEditor
               height="260px"
-              defaultLanguage="markdown"
               value={activePromptValue}
-              onChange={(value) => onPromptChange(value || '')}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                fontFamily: 'JetBrains Mono, monospace',
-                lineNumbers: 'off',
-                wordWrap: 'on',
-                smoothScrolling: true,
-                scrollBeyondLastLine: false,
-              }}
+              onChange={(value: string) => onPromptChange(value)}
+              className="bg-[#101422]/80"
             />
           </div>
         </motion.div>

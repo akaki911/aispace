@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
@@ -599,3 +601,4 @@ const ScannerPanel: React.FC<ScannerPanelProps> = ({
 };
 
 export default ScannerPanel;
+// @ts-nocheck

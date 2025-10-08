@@ -21,7 +21,7 @@ interface SecretListProps {
   variant: SecretsPageVariant;
 }
 
-const formatDateTime = (value: string) => {
+const formatDateTime = (value: string | null | undefined) => {
   if (!value) {
     return '—';
   }

@@ -1,3 +1,4 @@
+import type { CSSProperties, ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Settings2, Wand2 } from 'lucide-react';
 import Switch from '@/components/Switch';
@@ -13,7 +14,7 @@ interface UICustomizationSectionProps {
   onFontFamilyChange: (value: string) => void;
   activeTheme: string;
   onThemeChange: (themeId: string) => void;
-  themePreviewStyle: React.CSSProperties;
+  themePreviewStyle: CSSProperties;
   animationToggles: AnimationToggleState;
   onToggleAnimation: (key: string, value: boolean) => void;
 }
@@ -102,7 +103,7 @@ export function UICustomizationSection({
               </div>
               <Switch
                 checked={animationToggles[option.key]}
-                onCheckedChange={(value) => onToggleAnimation(option.key, value)}
+                onCheckedChange={(value: boolean) => onToggleAnimation(option.key, value)}
                 aria-label={`${option.label} toggle`}
               />
             </div>
@@ -120,7 +121,7 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
       <input
         type="color"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
         className="h-12 w-full rounded-2xl border border-[#7C6CFF33] bg-transparent shadow-inner"
       />
     </label>

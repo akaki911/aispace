@@ -48,7 +48,7 @@ const fetchMetrics = async (): Promise<AutoImproveMetricsResponse> => {
     },
   );
   const metrics = Array.isArray(payload.metrics)
-    ? payload.metrics.map((metric) => normalizeMetric(metric as AutoImproveMetric))
+    ? payload.metrics.map((metric: AutoImproveMetric) => normalizeMetric(metric))
     : [];
 
   return {

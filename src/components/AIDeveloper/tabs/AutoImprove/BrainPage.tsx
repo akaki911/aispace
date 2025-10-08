@@ -116,16 +116,16 @@ const BrainPage: React.FC = () => {
         onError: () => {
           setConnection(machine.send({ type: 'SSE_ERROR' }));
         },
-        onTransportChange: (mode) => {
+        onTransportChange: (mode: 'sse' | 'poll') => {
           setTransport(mode);
           if (mode === 'poll') {
             toast('Live feed დაქვეითდა — polling fallback გააქტიურებულია.', { duration: 4000 });
           }
         },
-        onBackpressure: (size) => {
+        onBackpressure: (size: number) => {
           setBackpressure(size);
         },
-        onEvent: (eventName: AutoImproveStreamEventName, event) => {
+        onEvent: (eventName: AutoImproveStreamEventName, event: MessageEvent<string>) => {
           if (eventName === 'heartbeat') {
             setLastHeartbeatAt(Date.now());
             setConnection(machine.send({ type: 'SSE_MESSAGE' }));
@@ -331,7 +331,6 @@ const BrainPage: React.FC = () => {
           setConnection(machine.send({ type: 'SSE_MESSAGE' }));
         },
       },
-      { headers: { Accept: 'text/event-stream' } },
     );
 
     controllerRef.current = controller;

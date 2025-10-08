@@ -18,6 +18,7 @@ import AutoUpdateMonitoringDashboard from '@/components/AutoUpdateMonitoringDash
 import SecurityAuditTab from '@/components/SecurityAuditTab';
 import ActivityLog from '@/components/ActivityLog';
 import type {
+  AutoImproveLogEntry,
   AutoImproveMetric,
   AutoImproveServiceState,
 } from '../AutoImprove/types';
@@ -298,7 +299,7 @@ const AutoImproveTab: React.FC<AutoImproveTabProps> = ({
   }, [metrics, searchValue, selectedModel]);
 
   const modelOptions = useMemo(
-    () => availableModels.map((model) => ({ id: model.id, label: model.label })),
+    () => availableModels.map((model: { id: string; label: string }) => ({ id: model.id, label: model.label })),
     [availableModels],
   );
 
@@ -1177,8 +1178,11 @@ const AutoImproveTab: React.FC<AutoImproveTabProps> = ({
   const priorityLogEntries = useMemo<BrainMonitorLogEntry[]>(() => {
     const entries: BrainMonitorLogEntry[] = [];
 
-    const metricLogs = Array.isArray(priorityMetric?.logs) ? priorityMetric?.logs ?? [] : [];
-    metricLogs.forEach((log, index) => {
+    type MetricLogEntry = AutoImproveLogEntry | string;
+    const metricLogs: MetricLogEntry[] = Array.isArray(priorityMetric?.logs)
+      ? (priorityMetric?.logs as MetricLogEntry[])
+      : [];
+    metricLogs.forEach((log: MetricLogEntry, index: number) => {
       if (!log) {
         return;
       }
@@ -1217,7 +1221,7 @@ const AutoImproveTab: React.FC<AutoImproveTabProps> = ({
     });
 
     if (guruloStatus.ticker.length > 0) {
-      guruloStatus.ticker.forEach((item, index) => {
+      guruloStatus.ticker.forEach((item: (typeof guruloStatus.ticker)[number], index: number) => {
         const label = item.label?.trim() ?? '';
         const value = item.value?.trim() ?? '';
         if (!label && !value) {

@@ -1,12 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const buildTime = new Date().toISOString();
 
-const replaceHealthBuildTime = () => ({
+const replaceHealthBuildTime = (): Plugin => ({
   name: 'replace-health-build-time',
   apply: 'build',
   closeBundle() {
@@ -31,7 +34,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@aispace': '/src',
+      '@aispace': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 });
