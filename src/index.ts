@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import AISpaceApp from './App';
+import './i18n';
 
 export { default as AISpaceApp } from './App';
 export * from '@aispace/routes';
