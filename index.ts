@@ -1,11 +1,3 @@
-export { default as AISpaceApp } from './App';
-export * from './routes';
-export * from './components';
-export * from './hooks';
-export * from './services';
+import './src/index.ts';
 
-export const getAISpaceBasePath = () =>
-  (import.meta.env?.VITE_AISPACE_BASE as string | undefined) ?? '/admin/ai-developer';
-
-export const AISPACE_BASE_PATH = getAISpaceBasePath();
-
+export * from './src/index.ts';
