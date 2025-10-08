@@ -4,7 +4,7 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@aispace/*": ["./*"]
+      "@aispace/*": ["src/*"]
     },
     "target": "ESNext",
     "useDefineForClassFields": true,
@@ -25,16 +25,6 @@
     "emitDeclarationOnly": true,
     "outDir": "./node_modules/.tmp/tsc/app"
   },
-  "include": [
-    "src",
-    "components",
-    "hooks",
-    "routes",
-    "services",
-    "store",
-    "theme",
-    "types",
-    "index.ts"
-  ],
+  "include": ["src", "index.ts"],
   "exclude": ["node_modules", "dist"]
 }
