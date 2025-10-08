@@ -5,13 +5,14 @@ interface RequestOptions extends RequestInit {
 const ADMIN_BASE_PATH = '/api/ai/admin';
 
 async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { parseJson = true, ...fetchOptions } = options;
+  const { parseJson = true, headers, credentials, ...fetchOptions } = options;
   const response = await fetch(`${ADMIN_BASE_PATH}${path}`, {
+    credentials: credentials ?? 'include',
+    ...fetchOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...headers,
     },
-    ...fetchOptions,
   });
 
   if (!response.ok) {
