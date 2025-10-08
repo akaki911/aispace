@@ -4,7 +4,8 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@aispace/*": ["src/*"]
+      "@aispace/*": ["src/*"],
+      "@/*": ["src/*"]
     },
     "target": "ESNext",
     "useDefineForClassFields": true,
@@ -20,7 +21,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "./node_modules/.tmp/tsc/app"
