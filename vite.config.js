@@ -25,6 +25,8 @@ export default defineConfig({
     resolve: {
         alias: {
             '@aispace': '/src',
+            '@': '/src',
+            '@monaco-editor/react': '/src/stubs/monaco-editor-react',
         },
     },
 });
