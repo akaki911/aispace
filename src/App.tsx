@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { AIDeveloperRoute, GurulaRoute, SecretsRoute } from './routes';
+import { AIDeveloperRoute, GurulaRoute, SecretsRoute } from '@aispace/routes';
 
 const AISpaceApp = () => {
   return (
@@ -18,4 +18,3 @@ const AISpaceApp = () => {
 };
 
 export default AISpaceApp;
-
