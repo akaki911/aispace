@@ -7,6 +7,10 @@ import react from '@vitejs/plugin-react';
 
 const buildTime = new Date().toISOString();
 
+const base = process.env.VITE_AISPACE_BASE && process.env.VITE_AISPACE_BASE !== '/'
+  ? ('/' + process.env.VITE_AISPACE_BASE).replace(/\/+/g, '/').replace(/\/+$/, '')
+  : '/';
+
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const srcDir = path.resolve(rootDir, './src');
 const replaceHealthBuildTime = (): Plugin => ({
@@ -27,7 +31,7 @@ const replaceHealthBuildTime = (): Plugin => ({
 });
 
 export default defineConfig({
-  base: '/',
+  base,
   plugins: [react(), replaceHealthBuildTime()],
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),

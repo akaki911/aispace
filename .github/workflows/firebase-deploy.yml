@@ -10,7 +10,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT || 'aispace-prod' }}
+      FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT }}
+      GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,22 +35,12 @@ jobs:
           cd functions
           npm ci
 
-      - name: Configure Google credentials
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
-        run: |
-          if [ -z "${GOOGLE_APPLICATION_CREDENTIALS_JSON}" ]; then
-            echo "GOOGLE_APPLICATION_CREDENTIALS_JSON secret is required" >&2
-            exit 1
-          fi
-
-          key_file="$(mktemp)"
-          printf '%s' "${GOOGLE_APPLICATION_CREDENTIALS_JSON}" > "${key_file}"
-          chmod 600 "${key_file}"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=${key_file}" >> "$GITHUB_ENV"
 
       - name: Deploy to Firebase
-        run: firebase deploy --only hosting,functions --project "${FIREBASE_PROJECT}"
+        env:
+          FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT }}
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+        run: firebase deploy --only functions,hosting --project ${{ env.FIREBASE_PROJECT }}
 
       - name: Post-deploy smoke tests
         run: |
