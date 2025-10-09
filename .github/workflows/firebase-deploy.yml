@@ -27,6 +27,17 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Smoke test /api/version
+        run: curl -sS -f https://aispace.bakhmaro.co/api/version
+
+      - name: Smoke test /api/ai/health
+        run: curl -sS -f https://aispace.bakhmaro.co/api/ai/health
+
+      - name: Smoke test /api/console/events
+        run: |
+          set -euo pipefail
+          curl -sS -N https://aispace.bakhmaro.co/api/console/events | head -n 5
+
       - name: Deploy to Firebase
         run: firebase deploy --only hosting,functions --project ${{ secrets.FIREBASE_PROJECT }}
         env:
