@@ -8,8 +8,7 @@ import react from '@vitejs/plugin-react';
 const buildTime = new Date().toISOString();
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
-const srcDir = fileURLToPath(new URL('./src', import.meta.url));
-
+const srcDir = path.resolve(rootDir, './src');
 const replaceHealthBuildTime = (): Plugin => ({
   name: 'replace-health-build-time',
   apply: 'build',
