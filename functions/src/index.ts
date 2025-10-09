@@ -1,33 +1,37 @@
-import cors from 'cors';
-import express, { type CookieOptions } from 'express';
+import cors, { CorsOptions } from 'cors';
+import express, { NextFunction, Request, Response } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { onRequest } from 'firebase-functions/v2/https';
 
 const app = express();
 
-const corsMiddleware = cors({
-  origin: 'https://aispace.bakhmaro.co',
+const allowedOrigin = 'https://aispace.bakhmaro.co';
+const corsOptions: CorsOptions = {
+  origin: allowedOrigin,
   credentials: true,
-});
+};
 
-app.use(corsMiddleware);
-app.options('*', corsMiddleware);
+app.use(cors(corsOptions));
+app.use(express.json());
 
-app.use((_, res, next) => {
-  const originalCookie = res.cookie.bind(res);
-  res.cookie = ((name, value, options) => {
-    const defaults: CookieOptions = {
-      domain: '.bakhmaro.co',
-      secure: true,
-      sameSite: 'lax',
-    };
-    return originalCookie(name, value, { ...defaults, ...(options ?? {}) });
-  }) as typeof res.cookie;
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header('Vary', 'Origin');
+  if (req.headers.origin === allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
+  res.cookie('aispace-session', 'active', {
+    domain: '.bakhmaro.co',
+    secure: true,
+    sameSite: 'none',
+    httpOnly: false,
+    path: '/',
+  });
+
   next();
 });
-
-app.use(express.json());
 
 interface RootPackageJson {
   name?: string;
@@ -75,7 +79,7 @@ app.get('/version', (_req, res) => {
   });
 });
 
-app.get('/ai/health', (_req, res) => {
+app.get('/ai/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     ok: true,
@@ -84,37 +88,35 @@ app.get('/ai/health', (_req, res) => {
   });
 });
 
-app.get('/console/events', (req, res) => {
+app.get('/console/events', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
+  if (typeof res.flushHeaders === 'function') {
+    res.flushHeaders();
+  }
 
-  const retryMs = 5000;
-  res.write(`retry: ${retryMs}\n\n`);
-  res.flushHeaders?.();
+  res.write('retry: 5000\n\n');
 
-  let eventId = 0;
-  const sendHeartbeat = () => {
-    eventId += 1;
-    const payload = {
-      type: 'heartbeat',
-      time: new Date().toISOString(),
-    };
-    res.write(`id: ${eventId}\n`);
-    res.write('event: heartbeat\n');
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  let nextId = 1;
+
+  const sendEvent = (event: string, data: unknown) => {
+    const payload = JSON.stringify(data);
+    res.write(`id: ${nextId}\n`);
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${payload}\n\n`);
+    nextId += 1;
   };
 
-  const heartbeatInterval = setInterval(sendHeartbeat, 15000);
-  sendHeartbeat();
+  sendEvent('connected', { time: new Date().toISOString() });
 
-  const cleanup = () => {
-    clearInterval(heartbeatInterval);
-  };
+  const heartbeat = setInterval(() => {
+    sendEvent('heartbeat', { time: new Date().toISOString() });
+  }, 15_000);
 
-  req.on('close', cleanup);
-  req.on('aborted', cleanup);
+  req.on('close', () => {
+    clearInterval(heartbeat);
+  });
 });
 
 const hasGithubSecrets = (): boolean => {
