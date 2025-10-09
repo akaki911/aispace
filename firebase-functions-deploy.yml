@@ -32,8 +32,10 @@ jobs:
             echo "GOOGLE_APPLICATION_CREDENTIALS_JSON secret is required" >&2
             exit 1
           fi
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > "$HOME/gcp-key.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp-key.json" >> "$GITHUB_ENV"
+          key_file="$(mktemp)"
+          printf '%s' "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > "$key_file"
+          chmod 600 "$key_file"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$key_file" >> "$GITHUB_ENV"
 
       - name: Deploy functions
         run: firebase deploy --only functions --project "$FIREBASE_PROJECT"
