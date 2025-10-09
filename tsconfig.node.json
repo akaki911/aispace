@@ -15,8 +15,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@aispace": ["apps/aispace-web/src/index.ts"],
-      "@aispace/*": ["apps/aispace-web/src/*"]
+      "@aispace": ["src/index.ts"],
+      "@aispace/*": ["src/*"]
     },
 
     /* Linting */
@@ -25,5 +25,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.mts", "apps/aispace-web/vite.config.ts"]
+  "include": ["vite.config.ts"]
 }
