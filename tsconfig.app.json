@@ -13,11 +13,12 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["vite/client", "node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@aispace": ["apps/aispace-web/src/index.ts"],
-      "@aispace/*": ["apps/aispace-web/src/*"]
+      "@aispace": ["src/index.ts"],
+      "@aispace/*": ["src/*"]
     },
 
     /* Linting */
@@ -26,7 +27,7 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "apps/aispace-web/src"],
+  "include": ["src"],
   "exclude": [
     // TODO(SOL-626): Remove once GitHubManagement module is type-safe again.
     "src/components/GitHubManagement/**"
