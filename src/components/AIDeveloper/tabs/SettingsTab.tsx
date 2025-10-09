@@ -7,7 +7,7 @@ import { useAssistantMode } from '@/contexts/useAssistantMode';
 import { useAuth } from '@/contexts/useAuth';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { setFeatureFlagOverride } from '@/lib/featureFlags';
-import agentsGuidelines from '../../../../../../AGENTS.md?raw';
+import agentsGuidelines from '../../../../AGENTS.md?raw';
 
 interface AgentRule {
   id: string;

@@ -9,7 +9,7 @@ interface AssistantModeValue {
   lastUpdatedBy: string | null;
   isSyncing: boolean;
   syncError: string | null;
-  setMode: (nextMode: AssistantMode) => void;
+  setMode: (nextMode: AssistantMode, meta?: { actor?: string | null; source?: string }) => void;
 }
 
 const defaultValue: AssistantModeValue = {
@@ -29,11 +29,14 @@ export const AssistantModeProvider = ({ children }: { children: ReactNode }) => 
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const [lastUpdatedBy, setLastUpdatedBy] = useState<string | null>(null);
 
-  const setMode = useCallback((nextMode: AssistantMode) => {
-    setModeState(nextMode);
-    setLastUpdatedAt(new Date().toISOString());
-    setLastUpdatedBy('local-admin');
-  }, []);
+  const setMode = useCallback(
+    (nextMode: AssistantMode, meta?: { actor?: string | null; source?: string }) => {
+      setModeState(nextMode);
+      setLastUpdatedAt(new Date().toISOString());
+      setLastUpdatedBy(meta?.actor ?? 'local-admin');
+    },
+    [],
+  );
 
   const value = useMemo<AssistantModeValue>(() => ({
     mode,

@@ -53,12 +53,14 @@ export function ChatConfigSection({
       );
 
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
+        };
+
         const response = await fetch(`/api/safety-switch/confirm/${action.id}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAdminAuthHeaders(),
-          },
+          headers,
           body: JSON.stringify({
             userId: user?.personalId ?? 'anonymous',
             confirmation:
@@ -123,10 +125,10 @@ export function ChatConfigSection({
           </div>
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
             <Editor
-              height="260px"
+              style={{ height: '260px' }}
               defaultLanguage="markdown"
               value={activePromptValue}
-              onChange={(value) => onPromptChange(value || '')}
+              onChange={(value) => onPromptChange(value ?? '')}
               theme="vs-dark"
               options={{
                 minimap: { enabled: false },

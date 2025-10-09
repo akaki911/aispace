@@ -1,14 +1,21 @@
 import clsx from 'classnames';
-import type { FC } from 'react';
+import type { ButtonHTMLAttributes, FC } from 'react';
 
 type SwitchProps = {
   checked?: boolean;
   disabled?: boolean;
   onCheckedChange?: (value: boolean) => void;
   label?: string;
-};
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'onClick'>;
 
-export const Switch: FC<SwitchProps> = ({ checked = false, disabled = false, onCheckedChange, label }) => {
+export const Switch: FC<SwitchProps> = ({
+  checked = false,
+  disabled = false,
+  onCheckedChange,
+  label,
+  className,
+  ...rest
+}) => {
   const handleClick = () => {
     if (disabled) {
       return;
@@ -23,10 +30,12 @@ export const Switch: FC<SwitchProps> = ({ checked = false, disabled = false, onC
         'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition',
         checked ? 'bg-emerald-500 text-white' : 'bg-slate-700/70 text-slate-200',
         disabled && 'opacity-50 cursor-not-allowed',
+        className,
       )}
       aria-pressed={checked}
       onClick={handleClick}
       disabled={disabled}
+      {...rest}
     >
       <span
         className={clsx(
