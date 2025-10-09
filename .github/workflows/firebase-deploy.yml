@@ -27,7 +27,34 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Install functions dependencies
+        run: |
+          cd functions
+          npm ci
+
       - name: Deploy to Firebase
         run: firebase deploy --only hosting,functions --project ${{ secrets.FIREBASE_PROJECT }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Post-deploy smoke tests
+        run: |
+          set -euo pipefail
+
+          curl -sSf https://aispace.bakhmaro.co/api/version | tee /tmp/version.json
+          test -s /tmp/version.json
+
+          curl -sSf https://aispace.bakhmaro.co/api/ai/health | tee /tmp/health.json
+          test -s /tmp/health.json
+
+          set +o pipefail
+          tmp_sse=$(mktemp)
+          curl -NsSf https://aispace.bakhmaro.co/api/console/events --max-time 20 | head -n 5 | tee "$tmp_sse"
+          curl_status=${PIPESTATUS[0]}
+          set -o pipefail
+          if [ "$curl_status" -ne 0 ]; then
+            echo "SSE smoke test failed" >&2
+            cat "$tmp_sse" >&2 || true
+            exit 1
+          fi
+          test -s "$tmp_sse"
