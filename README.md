@@ -66,6 +66,11 @@ VITE_FIREBASE_PROJECT_ID=<firebase-project-id>
 
 Additional secrets for GitHub integrations are described in [GitHub integration secrets](#github-integration-secrets). Never commit the `.env` file to source control.
 
+> **Secret scanning tip:** If GitHub Desktop blocks a push with "secret detected",
+> follow the workflow in [docs/SECRET_SCANNING.md](docs/SECRET_SCANNING.md) to
+> remove the value from history, rotate the credential, and force-push the
+> cleaned branch.
+
 ## Running the AI Space console locally
 
 1. Start the Vite development server from the repository root:
