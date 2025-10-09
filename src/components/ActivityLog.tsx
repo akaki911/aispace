@@ -10,9 +10,15 @@ export interface ActivityLogEntry {
 interface ActivityLogProps {
   items?: ActivityLogEntry[];
   onOpen?: (id: string) => void;
+  openFile?: (path: string) => void;
 }
 
-const ActivityLog: FC<ActivityLogProps> = ({ items = [], onOpen }) => {
+const ActivityLog: FC<ActivityLogProps> = ({ items = [], onOpen, openFile }) => {
+  const handleOpen = (id: string) => {
+    onOpen?.(id);
+    openFile?.(id);
+  };
+
   if (!items.length) {
     return (
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-white/60">
@@ -32,7 +38,7 @@ const ActivityLog: FC<ActivityLogProps> = ({ items = [], onOpen }) => {
             </div>
             <button
               type="button"
-              onClick={() => onOpen?.(item.id)}
+              onClick={() => handleOpen(item.id)}
               className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-wide text-white/80"
             >
               გახსნა

@@ -176,6 +176,12 @@ const MemoryList: React.FC<MemoryListProps> = ({
   statusFilter,
   onStatusFilterChange,
 }) => {
+  const logBadgeCount = metrics.logCount ?? 0;
+  const errorBadgeCount = metrics.errorCount ?? 0;
+  const warningBadgeCount = metrics.warningCount ?? 0;
+  const averageConfidence = metrics.averageConfidence ?? 0;
+  const healthScore = metrics.healthScore ?? 0;
+
   const filteredMemories = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const now = Date.now();
@@ -270,7 +276,7 @@ const MemoryList: React.FC<MemoryListProps> = ({
     { value: 'logs', label: 'ლოგი' },
   ];
 
-  const healthTone = metrics.healthScore >= 75 ? 'emerald' : metrics.healthScore >= 50 ? 'amber' : 'red';
+  const healthTone = healthScore >= 75 ? 'emerald' : healthScore >= 50 ? 'amber' : 'red';
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
@@ -330,25 +336,35 @@ const MemoryList: React.FC<MemoryListProps> = ({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <MemoryMetricBadge icon={<Database size={12} />} label="ლოგი" value={metrics.logCount} tone={metrics.logCount > 0 ? 'emerald' : 'slate'} />
-        <MemoryMetricBadge icon={<XCircle size={12} />} label="შეცდომა" value={metrics.errorCount} tone={metrics.errorCount > 0 ? 'red' : 'slate'} />
+        <MemoryMetricBadge
+          icon={<Database size={12} />}
+          label="ლოგი"
+          value={logBadgeCount}
+          tone={logBadgeCount > 0 ? 'emerald' : 'slate'}
+        />
+        <MemoryMetricBadge
+          icon={<XCircle size={12} />}
+          label="შეცდომა"
+          value={errorBadgeCount}
+          tone={errorBadgeCount > 0 ? 'red' : 'slate'}
+        />
         <MemoryMetricBadge
           icon={<ShieldCheck size={12} />}
           label="გაფრთხილება"
-          value={metrics.warningCount}
-          tone={metrics.warningCount > 0 ? 'amber' : 'slate'}
+          value={warningBadgeCount}
+          tone={warningBadgeCount > 0 ? 'amber' : 'slate'}
         />
         <MemoryMetricBadge
           icon={<Activity size={12} />}
           label="ჯანმრთელობა"
-          value={`${metrics.healthScore}%`}
+          value={`${healthScore}%`}
           tone={healthTone}
         />
         <MemoryMetricBadge
           icon={<BarChart3 size={12} />}
           label="დარწმუნებულობა"
-          value={`${metrics.averageConfidence}%`}
-          tone={metrics.averageConfidence > 74 ? 'emerald' : metrics.averageConfidence > 49 ? 'amber' : 'red'}
+          value={`${averageConfidence}%`}
+          tone={averageConfidence > 74 ? 'emerald' : averageConfidence > 49 ? 'amber' : 'red'}
         />
       </div>
 
@@ -368,7 +384,10 @@ const MemoryList: React.FC<MemoryListProps> = ({
           const confidencePercent = Math.round((confidenceRaw > 1 ? confidenceRaw : confidenceRaw * 100));
           const syncStatus = memory.syncStatus ?? (memory.userConfirmed ? 'synced' : 'pending');
           const syncProgressRaw = typeof memory.syncProgress === 'number' ? memory.syncProgress : undefined;
-          const syncProgress = Math.min(100, Math.max(0, syncProgressRaw ?? (memory.userConfirmed ? 100 : Math.max(60, metrics.averageConfidence - 5))));
+          const syncProgress = Math.min(
+            100,
+            Math.max(0, syncProgressRaw ?? (memory.userConfirmed ? 100 : Math.max(60, averageConfidence - 5))),
+          );
           const usageCount = memory.usageCount ?? memory.conversationCount ?? 0;
           const issuesCount = (memory.errorCount ?? 0) + (memory.warningCount ?? 0);
 
@@ -591,15 +610,18 @@ const MemoryControlsPanel: React.FC<MemoryControlsPanelProps> = ({
   const totalCount = metrics.total ?? fallbackMetrics.total;
   const confirmedCount = metrics.confirmed ?? fallbackMetrics.confirmed;
   const pendingCount = metrics.pending ?? fallbackMetrics.pending;
-  const logBadgeCount = metrics.logCount ?? fallbackMetrics.log;
-  const errorBadgeCount = metrics.errorCount ?? fallbackMetrics.error;
-  const warningBadgeCount = metrics.warningCount ?? fallbackMetrics.warning;
-  const averageConfidence = metrics.averageConfidence ?? fallbackMetrics.averageConfidence;
+  const metricsSummary = {
+    logBadgeCount: metrics.logCount ?? fallbackMetrics.log,
+    errorBadgeCount: metrics.errorCount ?? fallbackMetrics.error,
+    warningBadgeCount: metrics.warningCount ?? fallbackMetrics.warning,
+    averageConfidence: metrics.averageConfidence ?? fallbackMetrics.averageConfidence,
+  };
+  const { logBadgeCount, errorBadgeCount, warningBadgeCount, averageConfidence } = metricsSummary;
   const syncedCount = metrics.synced ?? 0;
   const syncingCount = metrics.syncing ?? 0;
   const failingCount = metrics.failing ?? 0;
   const selectionCount = selectedIds.length;
-  const isFeatureAvailable = controls.referenceSavedMemories || controls.referenceChatHistory;
+  const isFeatureAvailable = (controls.referenceSavedMemories ?? false) || (controls.referenceChatHistory ?? false);
   const metricsPanelVisible = isFeatureAvailable && showDetailedMetrics;
   const confirmationProgress = totalCount === 0 ? 0 : Math.round((confirmedCount / totalCount) * 100);
   const pendingProgress = totalCount === 0 ? 0 : Math.round((pendingCount / totalCount) * 100);
@@ -964,7 +986,7 @@ const MemoryControlsPanel: React.FC<MemoryControlsPanelProps> = ({
           id="toggle-saved-memories"
           label="შენახული მეხსიერებების გამოყენება"
           description="გურულო პასუხებში გამოიყენებს მომხმარებლის ფაქტებს და პრეფერენციებს"
-          enabled={controls.referenceSavedMemories}
+          enabled={Boolean(controls.referenceSavedMemories)}
           loading={loading}
           onChange={(value) => onToggle('savedMemories', value)}
           icon={<Zap size={16} />}
@@ -973,7 +995,7 @@ const MemoryControlsPanel: React.FC<MemoryControlsPanelProps> = ({
           id="toggle-chat-history"
           label="ჩატის ისტორიის გათვალისწინება"
           description="გურულო გამოიყენებს წინა დიალოგებს სრული კონტექსტისთვის"
-          enabled={controls.referenceChatHistory}
+          enabled={Boolean(controls.referenceChatHistory)}
           loading={loading}
           onChange={(value) => onToggle('chatHistory', value)}
           icon={<History size={16} />}
@@ -1008,7 +1030,7 @@ const MemoryControlsPanel: React.FC<MemoryControlsPanelProps> = ({
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           expanded={expandedViewEnabled}
-          showDetailedMetrics={metricsPanelVisible}
+          showDetailedMetrics={Boolean(metricsPanelVisible)}
           onRequestExpand={() => onExpandedViewChange(true)}
           timeRange={timeRange}
           statusFilter={statusFilter}

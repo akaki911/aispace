@@ -2,19 +2,20 @@ import type { FC } from 'react';
 
 interface AutoImproveTraceMonitorProps {
   traces?: Array<{ id: string; status: string; summary?: string }>;
+  className?: string;
 }
 
-const AutoImproveTraceMonitor: FC<AutoImproveTraceMonitorProps> = ({ traces = [] }) => {
+const AutoImproveTraceMonitor: FC<AutoImproveTraceMonitorProps> = ({ traces = [], className }) => {
   if (!traces.length) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-xs text-white/70">
+      <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 text-xs text-white/70 ${className ?? ''}`}>
         ტრეისები ჯერ არ არის ხელმისაწვდომი.
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${className ?? ''}`}>
       {traces.map((trace) => (
         <div key={trace.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-white/80">
           <div className="flex items-center justify-between">

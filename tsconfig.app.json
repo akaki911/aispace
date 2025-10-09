@@ -18,7 +18,10 @@
     "paths": {
       "@/*": ["src/*"],
       "@aispace": ["src/index.ts"],
-      "@aispace/*": ["src/*"]
+      "@aispace/*": ["src/*"],
+      "@tanstack/react-query": ["src/lib/react-query-shim"],
+      "@tanstack/react-query/*": ["src/lib/react-query-shim"],
+      "@monaco-editor/react": ["src/stubs/monaco-editor-react"]
     },
 
     /* Linting */

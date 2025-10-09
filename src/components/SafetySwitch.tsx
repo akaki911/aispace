@@ -8,29 +8,48 @@ export interface PendingAction {
 }
 
 interface SafetySwitchProps {
-  pendingActions: PendingAction[];
-  onExecute: (action: PendingAction) => Promise<{ success: boolean; result?: ReactNode }> | void;
+  pendingActions?: PendingAction[];
+  onExecute?: (action: PendingAction) => Promise<{ success: boolean; result?: ReactNode }> | void;
+  onActionExecute?: (action: PendingAction) => Promise<{ success: boolean; result?: ReactNode }> | void;
+  className?: string;
+  isVisible?: boolean;
 }
 
-export const SafetySwitch: FC<SafetySwitchProps> = ({ pendingActions, onExecute }) => {
+export const SafetySwitch: FC<SafetySwitchProps> = ({
+  pendingActions = [],
+  onExecute,
+  onActionExecute,
+  className,
+  isVisible = true,
+}) => {
+  if (!isVisible) {
+    return null;
+  }
+
+  const executor = onExecute ?? onActionExecute;
+
   if (!pendingActions.length) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-white/60">
+      <div className={`rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-white/60 ${className ?? ''}`}>
         უსაფრთხოების სიგნალები არ არის აქტიური.
       </div>
     );
   }
 
   const handleExecute = async (action: PendingAction) => {
+    if (!executor) {
+      console.warn('Safety switch execution attempted without handler', action);
+      return;
+    }
     try {
-      await onExecute(action);
+      await executor(action);
     } catch (error) {
       console.error('Safety switch action failed', error);
     }
   };
 
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${className ?? ''}`}>
       {pendingActions.map((action) => (
         <button
           key={action.id}
