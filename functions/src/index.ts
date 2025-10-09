@@ -3,35 +3,36 @@ import express, { NextFunction, Request, Response } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { onRequest } from 'firebase-functions/v2/https';
+import * as admin from 'firebase-admin';
+
+const SA = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+if (!admin.apps.length) {
+  if (!SA) throw new Error('Missing GOOGLE_APPLICATION_CREDENTIALS_JSON');
+  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(SA)) });
+}
 
 const app = express();
 
 const allowedOrigin = 'https://aispace.bakhmaro.co';
+const allowedOrigins = new Set([allowedOrigin]);
+const normaliseOrigin = (origin: string): string => origin.replace(/\/+$/, '');
 const corsOptions: CorsOptions = {
-  origin: allowedOrigin,
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const candidate = normaliseOrigin(origin);
+    if (allowedOrigins.has(origin) || allowedOrigins.has(candidate)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  },
   credentials: true,
 };
-
-app.use(cors(corsOptions));
-app.use(express.json());
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.header('Vary', 'Origin');
-  if (req.headers.origin === allowedOrigin) {
-    res.header('Access-Control-Allow-Origin', allowedOrigin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-
-  res.cookie('aispace-session', 'active', {
-    domain: '.bakhmaro.co',
-    secure: true,
-    sameSite: 'none',
-    httpOnly: false,
-    path: '/',
-  });
-
-  next();
-});
 
 interface RootPackageJson {
   name?: string;
@@ -86,6 +87,27 @@ app.get('/ai/health', (_req: Request, res: Response) => {
     service: 'aispace-api',
     time: new Date().toISOString(),
   });
+});
+
+app.use(cors(corsOptions));
+app.use(express.json());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header('Vary', 'Origin');
+  if (req.headers.origin === allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
+  res.cookie('aispace-session', 'active', {
+    domain: '.bakhmaro.co',
+    secure: true,
+    sameSite: 'none',
+    httpOnly: false,
+    path: '/',
+  });
+
+  next();
 });
 
 app.get('/console/events', (req: Request, res: Response) => {

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SWRConfig } from 'swr';
 import type { SWRConfiguration } from 'swr';
 
-import { AISpaceApp, AISPACE_BASE_PATH } from '@aispace';
+import { AISpaceApp } from '@aispace';
 import '@/index.css';
 import '@/i18n/config';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -31,24 +31,11 @@ const queryClient = new QueryClient({
   },
 });
 
-const normaliseBasePath = (basePath: string | undefined): string => {
-  if (!basePath) {
-    return '/';
-  }
-
-  let trimmed = basePath.endsWith('/*') ? basePath.slice(0, -2) : basePath;
-  if (!trimmed.startsWith('/')) {
-    trimmed = `/${trimmed}`;
-  }
-
-  while (trimmed.length > 1 && trimmed.endsWith('/')) {
-    trimmed = trimmed.slice(0, -1);
-  }
-
-  return trimmed || '/';
-};
-
-const routerBasePath = normaliseBasePath(AISPACE_BASE_PATH);
+const rawBase = import.meta.env?.VITE_AISPACE_BASE ?? '/';
+const basename =
+  rawBase && rawBase !== '/'
+    ? ('/' + rawBase).replace(/\/+/g, '/').replace(/\/+$/, '')
+    : '/';
 
 const rootElement = document.getElementById('root');
 
@@ -66,7 +53,7 @@ createRoot(rootElement).render(
               <AuthProvider>
                 <FeatureFlagsProvider>
                   <PermissionsProvider>
-                    <BrowserRouter basename={routerBasePath}>
+                    <BrowserRouter basename={basename}>
                       <AISpaceApp />
                     </BrowserRouter>
                   </PermissionsProvider>

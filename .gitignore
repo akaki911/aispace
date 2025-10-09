@@ -42,3 +42,6 @@ memory_data/
 memory_facts/
 attached_assets/*.txt
 tmp/
+.env
+.env.*
+!.env.example
