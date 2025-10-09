@@ -1,32 +1,34 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@aispace/*": ["src/*"],
       "@/*": ["src/*"],
-      "@monaco-editor/react": ["src/stubs/monaco-editor-react.tsx"]
+      "@aispace": ["apps/aispace-web/src/index.ts"],
+      "@aispace/*": ["apps/aispace-web/src/*"]
     },
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
+
+    /* Linting */
     "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "types": ["vite/client", "node"],
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "./node_modules/.tmp/tsc/app"
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "index.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "apps/aispace-web/src"],
+  "exclude": [
+    // TODO(SOL-626): Remove once GitHubManagement module is type-safe again.
+    "src/components/GitHubManagement/**"
+  ]
 }
