@@ -1,10 +1,12 @@
 # Environment Variables
 .env
+.env.*
+!.env.example
+!apps/aispace-web/.env.production
 .env.local
 .env.*.local
 .env.*.bak
 .env.production
-!apps/aispace-web/.env.production
 .env.development
 backend/.env
 backend/.env.*.bak
