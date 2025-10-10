@@ -27,7 +27,7 @@ All legacy root-level React components and duplicate Vite configuration files ha
 
 Install the following tooling before working with the repository:
 
-- **Node.js 20** – matches the runtime configured for the Firebase Functions bundle. Use a version manager such as `nvm` to pin the runtime.
+- **Node.js 20** – matches the runtime configured for the Firebase Functions bundle. Use a version manager such as `nvm` to pin the runtime. Windows-specific installation guidance is available in [docs/windows-node-setup.md](docs/windows-node-setup.md).
 - **npm 9+** – bundled with Node 20 and used for both the Vite client and the Functions workspace.
 - **Firebase CLI** – required for local emulation and deployments (`npm install -g firebase-tools`). Run `firebase login` once to link your Google account.
 - **Git** – used for cloning the repository and pushing deployment automation changes.
