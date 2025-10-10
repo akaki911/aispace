@@ -166,3 +166,16 @@ For local development, export the values in your shell before launching the emul
    - `https://aispace-prod.web.app/__/auth/handler`
 3. In **Authentication**, enable **ID tokens (recommended)** under the implicit grant settings.
 4. Record the Client ID, Client Secret, and Tenant ID for configuration in Firebase.
+
+## Deploy & Test checklist (OIDC)
+
+- [ ] Azure AD App Registration: add the Firebase redirect URIs above and expose the `employeeId` claim in ID tokens.
+- [ ] Firebase Console → Authentication → Sign-in method: create an OIDC provider with the Azure Client ID/Secret and scopes `openid profile email`.
+- [ ] Configure the Functions runtime secret `ADMIN_ALLOWED_PERSONAL_ID=01019062020` (via `firebase functions:secrets:set`).
+- [ ] Deploy: `firebase deploy --only functions,hosting --project aispace-prod`.
+- [ ] Smoke test:
+  ```bash
+  curl -sSf https://aispace.bakhmaro.co/api/version
+  curl -sSf https://aispace.bakhmaro.co/api/ai/health
+  curl -i -N https://aispace.bakhmaro.co/api/console/events | head -n 5
+  ```

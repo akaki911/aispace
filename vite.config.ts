@@ -46,5 +46,32 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          if (id.includes('node_modules/react-dom') || /node_modules\/(?:react|react\-dom)\//.test(id)) {
+            return 'vendor-react';
+          }
+
+          if (id.includes('node_modules/firebase/')) {
+            return 'vendor-firebase';
+          }
+
+          if (id.includes('node_modules/monaco-editor')) {
+            return 'vendor-monaco';
+          }
+
+          if (id.includes('node_modules/@tanstack/')) {
+            return 'vendor-tanstack';
+          }
+
+          return undefined;
+        },
+      },
+    },
   },
 });

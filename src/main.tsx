@@ -31,11 +31,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const rawBase = import.meta.env?.VITE_AISPACE_BASE ?? '/';
-const basename =
-  rawBase && rawBase !== '/'
-    ? ('/' + rawBase).replace(/\/+/g, '/').replace(/\/+$/, '')
-    : '/';
+const raw = import.meta.env.VITE_AISPACE_BASE ?? '/';
+const basename = raw && raw !== '/' ? ('/' + raw).replace(/\/+/g, '/').replace(/\/+$/, '') : '/';
 
 const rootElement = document.getElementById('root');
 

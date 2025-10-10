@@ -26,7 +26,7 @@ if (!admin.apps.length) {
 }
 
 const SESSION_COOKIE_NAME = 'aispace_session';
-const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN ?? '.bakhmaro.co';
+const COOKIE_DOMAIN = '.bakhmaro.co';
 const SESSION_TTL_INPUT = Number(process.env.SESSION_TTL_HOURS ?? '8');
 const SESSION_TTL_HOURS = Number.isFinite(SESSION_TTL_INPUT) && SESSION_TTL_INPUT > 0 ? SESSION_TTL_INPUT : 8;
 const SESSION_EXPIRES_MS = SESSION_TTL_HOURS * 3_600_000;
@@ -124,6 +124,9 @@ apiRouter.get('/version', (_req, res) => {
     version: appVersion,
     buildTime,
     commit: commitHash ?? null,
+    gitSha: process.env.GIT_SHA || 'dev',
+    node: process.version,
+    region: process.env.GCLOUD_REGION || 'us-central1',
   });
 });
 
