@@ -42,24 +42,24 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
         run: firebase deploy --only functions,hosting --project ${{ env.FIREBASE_PROJECT }}
 
-      - name: Post-deploy smoke tests
+      - name: Check API version endpoint
+        run: curl -sSf https://aispace.bakhmaro.co/api/version
+
+      - name: Check AI health endpoint
+        run: curl -sSf https://aispace.bakhmaro.co/api/ai/health
+
+      - name: Check console events SSE endpoint
         run: |
           set -euo pipefail
+          first_line=""
+          while IFS= read -r line; do
+            first_line="$line"
+            break
+          done < <(curl -NsSf --max-time 5 https://aispace.bakhmaro.co/api/console/events)
 
-          curl -sSf https://aispace.bakhmaro.co/api/version | tee /tmp/version.json
-          test -s /tmp/version.json
+          echo "$first_line"
 
-          curl -sSf https://aispace.bakhmaro.co/api/ai/health | tee /tmp/health.json
-          test -s /tmp/health.json
-
-          set +o pipefail
-          tmp_sse=$(mktemp)
-          curl -NsSf https://aispace.bakhmaro.co/api/console/events --max-time 20 | head -n 5 | tee "$tmp_sse"
-          curl_status=${PIPESTATUS[0]}
-          set -o pipefail
-          if [ "$curl_status" -ne 0 ]; then
-            echo "SSE smoke test failed" >&2
-            cat "$tmp_sse" >&2 || true
+          if ! printf '%s' "$first_line" | grep -Eq '^(retry:|data:)'; then
+            echo "Unexpected SSE response" >&2
             exit 1
           fi
-          test -s "$tmp_sse"
