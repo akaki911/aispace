@@ -16,6 +16,11 @@ const app = express();
 const allowedOrigin = 'https://aispace.bakhmaro.co';
 const allowedOrigins = new Set([allowedOrigin]);
 const normaliseOrigin = (origin: string): string => origin.replace(/\/+$/, '');
+const isAllowedOrigin = (origin?: string | null): boolean => {
+  if (!origin) return false;
+  const candidate = normaliseOrigin(origin);
+  return allowedOrigins.has(origin) || allowedOrigins.has(candidate);
+};
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
     if (!origin) {
@@ -23,8 +28,7 @@ const corsOptions: CorsOptions = {
       return;
     }
 
-    const candidate = normaliseOrigin(origin);
-    if (allowedOrigins.has(origin) || allowedOrigins.has(candidate)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }
@@ -94,7 +98,8 @@ app.use(express.json());
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.header('Vary', 'Origin');
-  if (req.headers.origin === allowedOrigin) {
+  const origin = req.headers.origin;
+  if (origin && isAllowedOrigin(origin)) {
     res.header('Access-Control-Allow-Origin', allowedOrigin);
     res.header('Access-Control-Allow-Credentials', 'true');
   }
@@ -102,7 +107,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.cookie('aispace-session', 'active', {
     domain: '.bakhmaro.co',
     secure: true,
-    sameSite: 'none',
+    sameSite: 'lax',
     httpOnly: false,
     path: '/',
   });
@@ -121,24 +126,25 @@ app.get('/console/events', (req: Request, res: Response) => {
   res.write('retry: 5000\n\n');
 
   let nextId = 1;
-
-  const sendEvent = (event: string, data: unknown) => {
-    const payload = JSON.stringify(data);
+  const sendData = (data: string) => {
     res.write(`id: ${nextId}\n`);
-    res.write(`event: ${event}\n`);
-    res.write(`data: ${payload}\n\n`);
+    res.write(`data: ${data}\n\n`);
     nextId += 1;
   };
 
-  sendEvent('connected', { time: new Date().toISOString() });
+  sendData('💓');
 
   const heartbeat = setInterval(() => {
-    sendEvent('heartbeat', { time: new Date().toISOString() });
+    sendData('💓');
   }, 15_000);
 
-  req.on('close', () => {
+  const cleanup = () => {
     clearInterval(heartbeat);
-  });
+  };
+
+  req.on('close', cleanup);
+  req.on('end', cleanup);
+  res.on('close', cleanup);
 });
 
 const hasGithubSecrets = (): boolean => {
