@@ -12,6 +12,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { onRequest } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { randomBytes } from 'crypto';
 
 // Ensure OIDC provider maps your Azure AD/Workspace claim (e.g., employeeId or custom) to
 // personal_id in the ID token; Firebase will pass it into getIdTokenResult().claims.
@@ -25,7 +26,8 @@ if (!admin.apps.length) {
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(serviceAccountJson)) });
 }
 
-const SESSION_COOKIE_NAME = 'aispace_session';
+const SESSION_COOKIE_NAME = '__Secure-aispace_session';
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
 const COOKIE_DOMAIN = '.bakhmaro.co';
 const SESSION_TTL_INPUT = Number(process.env.SESSION_TTL_HOURS ?? '8');
 const SESSION_TTL_HOURS = Number.isFinite(SESSION_TTL_INPUT) && SESSION_TTL_INPUT > 0 ? SESSION_TTL_INPUT : 8;
@@ -143,6 +145,10 @@ const SSE_WINDOW_MS = 60_000;
 const SSE_MAX_CONNECTIONS = 5;
 const sseRateLimits = new Map<string, { count: number; resetAt: number }>();
 
+const AUTH_RATE_LIMIT_WINDOW_MS = 5 * 60_000;
+const AUTH_RATE_LIMIT_MAX_REQUESTS = 30;
+const authRateLimitBucket = new Map<string, { count: number; resetAt: number }>();
+
 const resolveClientKey = (req: Request): string => {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.trim()) {
@@ -179,7 +185,56 @@ const trackSseConnection = (key: string): (() => void) | null => {
   };
 };
 
+const resolveRateLimitRecord = (
+  store: Map<string, { count: number; resetAt: number }>,
+  key: string,
+  windowMs: number,
+) => {
+  const now = Date.now();
+  const existing = store.get(key);
+  if (!existing || existing.resetAt <= now) {
+    const fresh = { count: 0, resetAt: now + windowMs };
+    store.set(key, fresh);
+    return fresh;
+  }
+  return existing;
+};
+
+const incrementRateLimit = (
+  store: Map<string, { count: number; resetAt: number }>,
+  key: string,
+  windowMs: number,
+  maxRequests: number,
+): { limited: boolean; retryAfterMs: number } => {
+  const record = resolveRateLimitRecord(store, key, windowMs);
+  if (record.count >= maxRequests) {
+    return { limited: true, retryAfterMs: Math.max(0, record.resetAt - Date.now()) };
+  }
+
+  record.count += 1;
+  store.set(key, record);
+  return { limited: false, retryAfterMs: Math.max(0, record.resetAt - Date.now()) };
+};
+
+const sendRateLimitResponse = (res: Response, retryAfterMs: number) => {
+  const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  res.setHeader('Retry-After', String(retryAfterSeconds));
+  res.status(429).json({ error: 'too_many_requests' });
+};
+
 apiRouter.get('/console/events', (req: Request, res: Response) => {
+  const { limited, retryAfterMs } = incrementRateLimit(
+    authRateLimitBucket,
+    `console:${resolveClientKey(req)}`,
+    AUTH_RATE_LIMIT_WINDOW_MS,
+    AUTH_RATE_LIMIT_MAX_REQUESTS,
+  );
+
+  if (limited) {
+    sendRateLimitResponse(res, retryAfterMs);
+    return;
+  }
+
   const cleanupRateLimit = trackSseConnection(resolveClientKey(req));
   if (!cleanupRateLimit) {
     res.status(429).json({ error: 'too_many_requests' });
@@ -248,7 +303,63 @@ const getSessionCookie = (req: Request): string | undefined => {
   return undefined;
 };
 
+const ensureCsrfCookie = (res: Response): string => {
+  const token = randomBytes(32).toString('hex');
+  res.cookie(CSRF_COOKIE_NAME, token, {
+    domain: COOKIE_DOMAIN,
+    path: '/',
+    httpOnly: false,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: SESSION_EXPIRES_MS,
+  });
+  return token;
+};
+
+const extractCsrfToken = (req: Request): string | undefined => {
+  const cookies = parseCookies(req.headers.cookie);
+  const cookieValue = cookies[CSRF_COOKIE_NAME];
+  if (cookieValue && cookieValue.trim()) {
+    return cookieValue.trim();
+  }
+  return undefined;
+};
+
+const verifyCsrfToken = (req: Request, res: Response): boolean => {
+  const headerToken = req.headers['x-xsrf-token'];
+  const cookieToken = extractCsrfToken(req);
+
+  if (!cookieToken || typeof headerToken !== 'string' || headerToken !== cookieToken) {
+    ensureCsrfCookie(res);
+    res.status(403).json({ error: 'forbidden' });
+    return false;
+  }
+
+  return true;
+};
+
+const rateLimitAuthRequest = (req: Request, res: Response): boolean => {
+  const key = `auth:${resolveClientKey(req)}`;
+  const { limited, retryAfterMs } = incrementRateLimit(
+    authRateLimitBucket,
+    key,
+    AUTH_RATE_LIMIT_WINDOW_MS,
+    AUTH_RATE_LIMIT_MAX_REQUESTS,
+  );
+
+  if (limited) {
+    sendRateLimitResponse(res, retryAfterMs);
+    return false;
+  }
+
+  return true;
+};
+
 apiRouter.post('/auth/session', async (req: Request, res: Response) => {
+  if (!rateLimitAuthRequest(req, res) || !verifyCsrfToken(req, res)) {
+    return;
+  }
+
   const { idToken } = req.body ?? {};
 
   if (typeof idToken !== 'string' || !idToken.trim()) {
@@ -271,6 +382,8 @@ apiRouter.post('/auth/session', async (req: Request, res: Response) => {
       maxAge: SESSION_EXPIRES_MS,
     });
 
+    ensureCsrfCookie(res);
+
     res.json({ ok: true });
   } catch (error) {
     console.error('Failed to establish session cookie', error);
@@ -278,7 +391,11 @@ apiRouter.post('/auth/session', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/auth/logout', async (_req: Request, res: Response) => {
+apiRouter.post('/auth/logout', async (req: Request, res: Response) => {
+  if (!rateLimitAuthRequest(req, res) || !verifyCsrfToken(req, res)) {
+    return;
+  }
+
   res.cookie(SESSION_COOKIE_NAME, '', {
     domain: COOKIE_DOMAIN,
     path: '/',
@@ -287,6 +404,8 @@ apiRouter.post('/auth/logout', async (_req: Request, res: Response) => {
     sameSite: 'lax',
     maxAge: 0,
   });
+
+  ensureCsrfCookie(res);
 
   res.json({ ok: true });
 });

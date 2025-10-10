@@ -1,4 +1,5 @@
 import { devConsoleEventBus, type DevConsoleConnectionStatus } from '@/lib/devConsoleEventBus';
+import { track } from '@/lib/telemetry';
 
 export type AutoImproveStreamEventName =
   | 'heartbeat'
@@ -181,6 +182,7 @@ export const connectAutoImproveStream = (
         transport = 'sse';
         options.onTransportChange?.('sse');
       }
+      track('sse_connect', { targetUrl });
     };
 
     const handleError = (event: Event) => {
@@ -189,6 +191,7 @@ export const connectAutoImproveStream = (
         return;
       }
       emitStatus('retrying', retryAttempt + 1);
+      track('sse_error', { targetUrl, type: event.type });
       restart();
     };
 
@@ -234,6 +237,7 @@ export const connectAutoImproveStream = (
     cleanupEventSource();
     if (wasActive && !explicitlyClosed && !paused) {
       options.onClose?.();
+      track('sse_disconnect', { targetUrl, reason: 'retry' });
     }
     scheduleReconnect();
   };
@@ -243,6 +247,7 @@ export const connectAutoImproveStream = (
     cleanupEventSource();
     options.onClose?.();
     emitStatus('disconnected', retryAttempt);
+    track('sse_disconnect', { targetUrl, reason: 'manual' });
   };
 
   const pause = () => {
@@ -255,6 +260,7 @@ export const connectAutoImproveStream = (
     emitStatus('disconnected', retryAttempt);
     options.onTransportChange?.('poll');
     cleanupEventSource();
+    track('sse_disconnect', { targetUrl, reason: 'pause' });
   };
 
   const resume = () => {
