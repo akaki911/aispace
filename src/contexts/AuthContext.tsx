@@ -30,6 +30,7 @@ export interface AuthUser {
 
 type AuthClaims = Record<string, unknown> & {
   personal_id?: string;
+  employeeId?: string;
   roles?: string[] | string;
 };
 
@@ -61,7 +62,9 @@ const firebaseApp = apps.length > 0 ? apps[0] : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const providerId = `oidc.${import.meta.env.VITE_OIDC_PROVIDER_ID || 'azure'}`;
 const apiBase = import.meta.env.VITE_API_BASE || '/api';
-const allowedPersonalId = import.meta.env.VITE_ALLOWED_PERSONAL_ID;
+const allowedPersonalId =
+  import.meta.env.VITE_ALLOWED_PERSONAL_ID ||
+  (typeof process !== 'undefined' ? process.env?.ADMIN_ALLOWED_PERSONAL_ID : undefined);
 
 const defaultAuthContext: AuthContextValue = {
   user: null,
@@ -93,7 +96,8 @@ const normaliseRoles = (claims: AuthClaims | null): string[] => {
 const buildAuthUser = (firebaseUser: User, claims: AuthClaims | null): AuthUser => {
   const roles = normaliseRoles(claims);
   const personalId =
-    typeof claims?.personal_id === 'string' ? (claims.personal_id as string) : undefined;
+    (typeof claims?.personal_id === 'string' ? (claims.personal_id as string) : undefined) ??
+    (typeof claims?.employeeId === 'string' ? (claims.employeeId as string) : undefined);
 
   return {
     id: firebaseUser.uid,
@@ -217,9 +221,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const roles = normaliseRoles(claims);
     const userRole = roles[0] ?? 'guest';
     const hasRole = (role: string) => roles.includes(role);
-    const isSuperAdmin = Boolean(
-      claims?.personal_id && allowedPersonalId && claims.personal_id === allowedPersonalId,
-    );
+    const pid =
+      (typeof claims?.personal_id === 'string' ? (claims.personal_id as string) : undefined) ??
+      (typeof claims?.employeeId === 'string' ? (claims.employeeId as string) : undefined);
+    const isSuperAdmin = Boolean(pid && allowedPersonalId && pid === allowedPersonalId);
 
     return {
       user,

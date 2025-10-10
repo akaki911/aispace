@@ -1,3 +1,11 @@
+/**
+ * OIDC (Azure AD / Entra ID) for Firebase Auth:
+ * Issuer (OIDC): https://login.microsoftonline.com/<TENANT_ID>/v2.0
+ * Required Redirect URIs (add in Azure App → Authentication):
+ *   https://aispace-prod.firebaseapp.com/__/auth/handler
+ *   https://aispace-prod.web.app/__/auth/handler
+ * Scopes: openid profile email (optional: offline_access)
+ */
 import cors, { CorsOptions } from 'cors';
 import express, { Request, Response } from 'express';
 import { readFileSync } from 'fs';
@@ -22,6 +30,7 @@ const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN ?? '.bakhmaro.co';
 const SESSION_TTL_INPUT = Number(process.env.SESSION_TTL_HOURS ?? '8');
 const SESSION_TTL_HOURS = Number.isFinite(SESSION_TTL_INPUT) && SESSION_TTL_INPUT > 0 ? SESSION_TTL_INPUT : 8;
 const SESSION_EXPIRES_MS = SESSION_TTL_HOURS * 3_600_000;
+// CORS allowlist: https://aispace.bakhmaro.co only; also permit missing Origin headers (e.g., curl).
 const allowedOrigin = 'https://aispace.bakhmaro.co';
 
 const resolveAllowedPersonalId = (): string | undefined => {
@@ -301,7 +310,11 @@ apiRouter.use(async (req, res, next) => {
     }
 
     const decoded = await admin.auth().verifySessionCookie(sessionCookie, true);
-    const personalId = decoded.personal_id as string | undefined;
+    // Azure AD → App Registration → Token configuration → Add optional claim (ID): employeeId.
+    // If you need a different name, map in code (we accept employeeId → personal_id fallback).
+    const personalId =
+      (decoded.personal_id as string | undefined) ||
+      (decoded.employeeId as string | undefined);
 
     if (!personalId) {
       res.status(403).json({ error: 'forbidden' });

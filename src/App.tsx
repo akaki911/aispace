@@ -4,7 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AIDeveloperRoute, GurulaRoute, SecretsRoute } from './routes';
 import { useAuth } from '@/contexts/useAuth';
 
-const DemoMessage = () => (
+const DemoMessage = ({ onLogin }: { onLogin?: () => void }) => (
   <div className="flex h-full flex-1 flex-col items-center justify-center bg-slate-950 p-6 text-center">
     <div className="max-w-xl space-y-4">
       <h1 className="text-2xl font-semibold text-slate-100">AI დეველოპერის პანელი</h1>
@@ -18,19 +18,28 @@ const DemoMessage = () => (
         მიუწვდომელია და სწორედ ამიტომ ცარიელი გვერდი ჩნდებოდა. ადმინისტრატორის სისტემასთან მიერთების
         გარეშე დამატებითი ნაბიჯების შესრულება საჭირო არ არის.
       </p>
+      {onLogin ? (
+        <button
+          type="button"
+          onClick={onLogin}
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 shadow-sm transition hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        >
+          Sign in with Enterprise (Azure AD)
+        </button>
+      ) : null}
     </div>
   </div>
 );
 
 const AISpaceApp = () => {
-  const { isSuperAdmin, isLoading, authInitialized } = useAuth();
+  const { isSuperAdmin, isLoading, authInitialized, login } = useAuth();
 
   if (!authInitialized || isLoading) {
     return <div className="p-6 text-sm text-slate-500">AI სივრცე იტვირთება...</div>;
   }
 
   if (!isSuperAdmin) {
-    return <DemoMessage />;
+    return <DemoMessage onLogin={() => void login()} />;
   }
 
   return (

@@ -157,3 +157,12 @@ GH_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
 For local development, export the values in your shell before launching the emulators or add them to `.env.local` inside the `functions/` directory. For deployed Functions, configure the secrets via `firebase functions:secrets:set` so they are available at runtime. Without these values the console still operates, but repository features remain disabled.
+
+## Azure AD (OIDC) quick setup
+
+1. Create an Azure AD App Registration for the Firebase-hosted app.
+2. Add the redirect URIs:
+   - `https://aispace-prod.firebaseapp.com/__/auth/handler`
+   - `https://aispace-prod.web.app/__/auth/handler`
+3. In **Authentication**, enable **ID tokens (recommended)** under the implicit grant settings.
+4. Record the Client ID, Client Secret, and Tenant ID for configuration in Firebase.
