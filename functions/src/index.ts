@@ -27,7 +27,6 @@ if (!admin.apps.length) {
 }
 
 const SESSION_COOKIE_NAME = '__Secure-aispace_session';
-const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
 const COOKIE_DOMAIN = '.bakhmaro.co';
 const SESSION_TTL_INPUT = Number(process.env.SESSION_TTL_HOURS ?? '8');
 const SESSION_TTL_HOURS = Number.isFinite(SESSION_TTL_INPUT) && SESSION_TTL_INPUT > 0 ? SESSION_TTL_INPUT : 8;
@@ -356,13 +355,21 @@ const rateLimitAuthRequest = (req: Request, res: Response): boolean => {
 };
 
 apiRouter.post('/auth/session', async (req: Request, res: Response) => {
-  if (!rateLimitAuthRequest(req, res) || !verifyCsrfToken(req, res)) {
-    return;
+  const authHeader = typeof req.headers.authorization === 'string' ? req.headers.authorization : undefined;
+  let idToken: string | undefined;
+
+  if (authHeader?.toLowerCase().startsWith('bearer ')) {
+    idToken = authHeader.slice(7).trim();
   }
 
-  const { idToken } = req.body ?? {};
+  if (!idToken) {
+    const bodyToken = (req.body ?? {}).idToken;
+    if (typeof bodyToken === 'string' && bodyToken.trim()) {
+      idToken = bodyToken.trim();
+    }
+  }
 
-  if (typeof idToken !== 'string' || !idToken.trim()) {
+  if (!idToken) {
     res.status(400).json({ error: 'invalid_request' });
     return;
   }
@@ -382,9 +389,7 @@ apiRouter.post('/auth/session', async (req: Request, res: Response) => {
       maxAge: SESSION_EXPIRES_MS,
     });
 
-    ensureCsrfCookie(res);
-
-    res.json({ ok: true });
+    res.status(200).json({ ok: true });
   } catch (error) {
     console.error('Failed to establish session cookie', error);
     res.status(401).json({ error: 'unauthenticated' });
