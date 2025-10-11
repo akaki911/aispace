@@ -18,6 +18,7 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
+import toast from 'react-hot-toast';
 
 export interface AuthUser {
   id: string;
@@ -36,6 +37,7 @@ type AuthClaims = Record<string, unknown> & {
 
 interface AuthContextValue {
   user: AuthUser | null;
+  session: { uid: string; email?: string | null } | null;
   claims: AuthClaims | null;
   isSuperAdmin: boolean;
   isAuthenticated: boolean;
@@ -43,6 +45,7 @@ interface AuthContextValue {
   authInitialized: boolean;
   userRole: string;
   hasRole: (role: string) => boolean;
+  startEnterpriseLogin: () => Promise<void>;
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -60,7 +63,6 @@ const firebaseConfig = {
 const apps = getApps();
 const firebaseApp = apps.length > 0 ? apps[0] : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
-const providerId = `oidc.${import.meta.env.VITE_OIDC_PROVIDER_ID || 'azure'}`;
 const apiBase = import.meta.env.VITE_API_BASE || '/api';
 const allowedPersonalId =
   import.meta.env.VITE_ALLOWED_PERSONAL_ID ||
@@ -68,6 +70,7 @@ const allowedPersonalId =
 
 const defaultAuthContext: AuthContextValue = {
   user: null,
+  session: null,
   claims: null,
   isSuperAdmin: false,
   isAuthenticated: false,
@@ -75,6 +78,7 @@ const defaultAuthContext: AuthContextValue = {
   authInitialized: false,
   userRole: 'guest',
   hasRole: () => false,
+  startEnterpriseLogin: async () => undefined,
   login: async () => undefined,
   logout: async () => undefined,
 };
@@ -111,39 +115,58 @@ const buildAuthUser = (firebaseUser: User, claims: AuthClaims | null): AuthUser 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<{ uid: string; email?: string | null } | null>(null);
   const [claims, setClaims] = useState<AuthClaims | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
 
+  const persistSession = useCallback(async (idToken: string) => {
+    try {
+      const response = await fetch(`${apiBase}/auth/session`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!response.ok) {
+        toast.error('Unable to establish secure session. Please try again.');
+        console.error('Failed to persist Firebase session cookie', response.status);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      toast.error('Unable to establish secure session. Please try again.');
+      console.error('Failed to persist Firebase session cookie', error);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     let isActive = true;
-
-    const persistSession = async (idToken: string) => {
-      try {
-        const response = await fetch(`${apiBase}/auth/session`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ idToken }),
-        });
-        if (!response.ok) {
-          console.error('Failed to persist Firebase session cookie', response.status);
-        }
-      } catch (error) {
-        console.error('Failed to persist Firebase session cookie', error);
-      }
-    };
 
     const completeRedirect = async () => {
       try {
         const result = await getRedirectResult(firebaseAuth);
         if (result?.user) {
           const idToken = await result.user.getIdToken(true);
-          await persistSession(idToken);
+          const persisted = await persistSession(idToken);
+          if (!persisted) {
+            try {
+              await signOut(firebaseAuth);
+            } catch (signOutError) {
+              console.error('Failed to sign out after session persistence error', signOutError);
+            }
+            setIsLoading(false);
+            return;
+          }
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
         }
       } catch (error) {
+        toast.error('Failed to complete sign-in. Please try again.');
         console.error('Failed to complete OIDC login redirect', error);
       }
     };
@@ -155,25 +178,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         if (nextUser) {
           const tokenResult = await getIdTokenResult(nextUser, true);
-          await persistSession(tokenResult.token);
+          const persisted = await persistSession(tokenResult.token);
+          if (!persisted) {
+            try {
+              await signOut(firebaseAuth);
+            } catch (signOutError) {
+              console.error('Failed to sign out after session persistence error', signOutError);
+            }
+            if (!isActive) {
+              return;
+            }
+            setClaims(null);
+            setUser(null);
+            setSession(null);
+            return;
+          }
           const nextClaims = (tokenResult.claims as AuthClaims) ?? null;
           if (!isActive) {
             return;
           }
           setClaims(nextClaims);
           setUser(buildAuthUser(nextUser, nextClaims));
+          setSession({ uid: nextUser.uid, email: nextUser.email });
         } else {
           if (!isActive) {
             return;
           }
           setClaims(null);
           setUser(null);
+          setSession(null);
         }
       } catch (error) {
         if (isActive) {
           console.error('Failed to resolve Firebase authentication state', error);
           setClaims(null);
           setUser(null);
+          setSession(null);
         }
       } finally {
         if (isActive) {
@@ -187,24 +227,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isActive = false;
       unsubscribe();
     };
+  }, [persistSession]);
+
+  const startEnterpriseLogin = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const provider = new OAuthProvider('oidc.azure');
+      await signInWithRedirect(firebaseAuth, provider);
+    } catch (error) {
+      toast.error('Unable to start enterprise sign-in. Please try again.');
+      console.error('Failed to start enterprise login', error);
+      setIsLoading(false);
+    }
   }, []);
 
   const login = useCallback(async () => {
-    const provider = new OAuthProvider(providerId);
-    await signInWithRedirect(firebaseAuth, provider);
-  }, []);
+    await startEnterpriseLogin();
+  }, [startEnterpriseLogin]);
 
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await fetch(`${apiBase}/auth/logout`, {
+      const response = await fetch(`${apiBase}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+      if (!response.ok) {
+        toast.error('Failed to end secure session. Please try again.');
+      }
     } catch (error) {
+      toast.error('Failed to end secure session. Please try again.');
       console.error('Failed to call logout endpoint', error);
     } finally {
       try {
@@ -212,7 +267,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (signOutError) {
         console.error('Failed to sign out from Firebase Auth', signOutError);
       } finally {
+        setClaims(null);
+        setUser(null);
+        setSession(null);
         setIsLoading(false);
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
       }
     }
   }, []);
@@ -228,6 +289,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return {
       user,
+      session,
       claims,
       isSuperAdmin,
       isAuthenticated: Boolean(user),
@@ -235,10 +297,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       authInitialized,
       userRole,
       hasRole,
+      startEnterpriseLogin,
       login,
       logout,
     };
-  }, [authInitialized, claims, isLoading, login, logout, user]);
+  }, [authInitialized, claims, isLoading, login, logout, session, startEnterpriseLogin, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

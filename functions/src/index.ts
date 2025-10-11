@@ -25,7 +25,7 @@ if (!admin.apps.length) {
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(serviceAccountJson)) });
 }
 
-const SESSION_COOKIE_NAME = 'aispace_session';
+const SESSION_COOKIE_NAME = '__Secure-aispace_session';
 const COOKIE_DOMAIN = '.bakhmaro.co';
 const SESSION_TTL_INPUT = Number(process.env.SESSION_TTL_HOURS ?? '8');
 const SESSION_TTL_HOURS = Number.isFinite(SESSION_TTL_INPUT) && SESSION_TTL_INPUT > 0 ? SESSION_TTL_INPUT : 8;
@@ -249,9 +249,21 @@ const getSessionCookie = (req: Request): string | undefined => {
 };
 
 apiRouter.post('/auth/session', async (req: Request, res: Response) => {
-  const { idToken } = req.body ?? {};
+  const authHeader = typeof req.headers.authorization === 'string' ? req.headers.authorization : undefined;
+  let idToken: string | undefined;
 
-  if (typeof idToken !== 'string' || !idToken.trim()) {
+  if (authHeader?.toLowerCase().startsWith('bearer ')) {
+    idToken = authHeader.slice(7).trim();
+  }
+
+  if (!idToken) {
+    const bodyToken = (req.body ?? {}).idToken;
+    if (typeof bodyToken === 'string' && bodyToken.trim()) {
+      idToken = bodyToken.trim();
+    }
+  }
+
+  if (!idToken) {
     res.status(400).json({ error: 'invalid_request' });
     return;
   }
@@ -271,7 +283,7 @@ apiRouter.post('/auth/session', async (req: Request, res: Response) => {
       maxAge: SESSION_EXPIRES_MS,
     });
 
-    res.json({ ok: true });
+    res.status(200).json({ ok: true });
   } catch (error) {
     console.error('Failed to establish session cookie', error);
     res.status(401).json({ error: 'unauthenticated' });
