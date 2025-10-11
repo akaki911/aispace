@@ -152,7 +152,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (result?.user) {
           const idToken = await result.user.getIdToken(true);
           const persisted = await persistSession(idToken);
-          if (persisted && typeof window !== 'undefined') {
+          if (!persisted) {
+            try {
+              await signOut(firebaseAuth);
+            } catch (signOutError) {
+              console.error('Failed to sign out after session persistence error', signOutError);
+            }
+            setIsLoading(false);
+            return;
+          }
+          if (typeof window !== 'undefined') {
             window.location.href = '/';
           }
         }
@@ -169,7 +178,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         if (nextUser) {
           const tokenResult = await getIdTokenResult(nextUser, true);
-          await persistSession(tokenResult.token);
+          const persisted = await persistSession(tokenResult.token);
+          if (!persisted) {
+            try {
+              await signOut(firebaseAuth);
+            } catch (signOutError) {
+              console.error('Failed to sign out after session persistence error', signOutError);
+            }
+            if (!isActive) {
+              return;
+            }
+            setClaims(null);
+            setUser(null);
+            setSession(null);
+            return;
+          }
           const nextClaims = (tokenResult.claims as AuthClaims) ?? null;
           if (!isActive) {
             return;
