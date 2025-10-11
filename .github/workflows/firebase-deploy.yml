@@ -7,31 +7,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        run: npm run type-check
-
-      - name: Build app
-        run: npm run build
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    strategy:
+      matrix:
+        environment: [prod, staging]
     env:
-      FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT }}
+      FIREBASE_PROJECT: ${{ matrix.environment == 'prod' && secrets.FIREBASE_PROJECT || secrets.FIREBASE_PROJECT_STAGING }}
       GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
     steps:
       - name: Checkout repository
@@ -42,33 +24,52 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
       - name: Install dependencies
         run: npm ci
 
+      - name: Install functions dependencies for lint
+        run: |
+          cd functions
+          npm ci
+
+      - name: Lint Cloud Functions
+        run: |
+          PATH="$(pwd)/functions/node_modules/.bin:$PATH" npm run lint:func
+
+      - name: Type-check
+        run: npm run type-check
+
       - name: Build app
         run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          if-no-files-found: error
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
 
       - name: Install functions dependencies
         run: |
           cd functions
           npm ci
 
-      - name: Deploy to Firebase
-        env:
-          FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT }}
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+      - name: Deploy to Firebase (${{ matrix.environment }})
         run: firebase deploy --only functions,hosting --project ${{ env.FIREBASE_PROJECT }}
 
       - name: Smoke check — API version
+        if: matrix.environment == 'prod'
         run: curl -sSf https://aispace.bakhmaro.co/api/version
 
       - name: Smoke check — AI health
+        if: matrix.environment == 'prod'
         run: curl -sSf https://aispace.bakhmaro.co/api/ai/health
 
       - name: Smoke check — Console events SSE
+        if: matrix.environment == 'prod'
         run: |
           set -euo pipefail
           first_line=""

@@ -14,6 +14,7 @@ import { PermissionsProvider } from '@/contexts/PermissionsContext';
 import { AssistantModeProvider } from '@/contexts/AssistantModeContext';
 import { AIModeProvider } from '@/contexts/AIModeContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const ensureSWRConfig = (parent?: SWRConfiguration): SWRConfiguration => ({
   ...parent,
@@ -51,7 +52,9 @@ createRoot(rootElement).render(
                 <FeatureFlagsProvider>
                   <PermissionsProvider>
                     <BrowserRouter basename={basename}>
-                      <AISpaceApp />
+                      <ErrorBoundary>
+                        <AISpaceApp />
+                      </ErrorBoundary>
                     </BrowserRouter>
                   </PermissionsProvider>
                 </FeatureFlagsProvider>

@@ -49,24 +49,32 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) {
-            return undefined;
+          const normalizedId = id.split('?')[0];
+
+          if (normalizedId.includes('node_modules/react-dom') || /node_modules\/(?:react|react\-dom)\//.test(normalizedId)) {
+            return 'react';
           }
 
-          if (id.includes('node_modules/react-dom') || /node_modules\/(?:react|react\-dom)\//.test(id)) {
-            return 'vendor-react';
+          if (normalizedId.includes('node_modules/firebase/')) {
+            return 'firebase';
           }
 
-          if (id.includes('node_modules/firebase/')) {
-            return 'vendor-firebase';
+          if (normalizedId.includes('node_modules/monaco-editor') || normalizedId.includes('node_modules/monaco-editor-core')) {
+            return 'monaco';
           }
 
-          if (id.includes('node_modules/monaco-editor')) {
-            return 'vendor-monaco';
+          if (normalizedId.includes('node_modules/@tanstack/')) {
+            return 'query';
           }
 
-          if (id.includes('node_modules/@tanstack/')) {
-            return 'vendor-tanstack';
+          const relativeFromSrc = path.relative(srcDir, normalizedId).replace(/\\/g, '/');
+
+          if (!relativeFromSrc.startsWith('..') && relativeFromSrc.startsWith('routes/')) {
+            const chunkName = relativeFromSrc
+              .replace(/^routes\//, '')
+              .replace(/\.tsx?$/, '')
+              .replace(/\//g, '-');
+            return `route-${chunkName}`;
           }
 
           return undefined;
