@@ -1,0 +1,36 @@
+{
+  "models": [
+    {
+      "id": "llama-3.1-8b-instant",
+      "label": "LLaMA 3.1 8B (სწრაფი)", 
+      "category": "small",
+      "enabled": true,
+      "description": "უსწრაფესი მოდელი მარტივი ამოცანებისთვის",
+      "maxTokens": 8192
+    },
+    {
+      "id": "llama-3.1-70b-versatile",
+      "label": "LLaMA 3.1 70B (ძლიერი)",
+      "category": "large", 
+      "enabled": true,
+      "description": "ძლიერი მოდელი რთული ამოცანებისთვის",
+      "maxTokens": 131072
+    },
+    {
+      "id": "llama-3.3-70b-versatile",
+      "label": "LLaMA 3.3 70B (ყველაზე ძლიერი)",
+      "category": "large", 
+      "enabled": true,
+      "description": "უძლიერესი მოდელი კომპლექსური ანალიზისთვის",
+      "maxTokens": 131072
+    },
+    {
+      "id": "mixtral-8x7b-32768",
+      "label": "Mixtral 8x7B (მრავალენოვანი)",
+      "category": "large",
+      "enabled": true,
+      "description": "მრავალენოვანი ექსპერტთა მოდელი",
+      "maxTokens": 32768
+    }
+  ]
+}

@@ -1,0 +1,341 @@
+/**
+ * 🎨 Enhanced Messages CSS - Phase 1 Implementation
+ * პრობლემის მოგვარება.txt-ის მიხედვით Visual Hierarchy
+ * 
+ * PHASE 1 VISUAL HIERARCHY:
+ * ✅ Primary responses background-ით
+ * ✅ Error messages წითელი border-ით  
+ * ✅ Success messages მწვანე accent-ით
+ * ✅ Code snippets dark theme-ით
+ */
+
+/* ===== BASE MESSAGE STYLES ===== */
+.message-enhanced {
+  @apply rounded-lg p-4 mb-4 border-l-4 transition-all duration-300 hover:shadow-lg;
+  font-family: 'Inter', 'Arial', sans-serif;
+  line-height: 1.6;
+  position: relative;
+}
+
+/* Message hover effect */
+.message-enhanced:hover {
+  transform: translateX(2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== PRIMARY RESPONSES ===== */
+.message-enhanced.category-primary {
+  @apply bg-gray-50 border-l-gray-400 text-gray-800;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.message-enhanced.category-primary:hover {
+  @apply bg-gray-100;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+/* ===== SUCCESS MESSAGES ===== */
+.message-enhanced.category-success {
+  @apply bg-green-50 border-l-green-400 text-green-800;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.message-enhanced.category-success:hover {
+  @apply bg-green-100;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.message-enhanced.category-success::before {
+  content: '✅';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+/* ===== ERROR MESSAGES ===== */
+.message-enhanced.category-error {
+  @apply bg-red-50 border-l-red-400 text-red-800;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  border: 2px solid #fca5a5;
+  border-left: 6px solid #ef4444;
+}
+
+.message-enhanced.category-error:hover {
+  @apply bg-red-100;
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  border-color: #f87171;
+}
+
+.message-enhanced.category-error::before {
+  content: '❌';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 18px;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ===== WARNING MESSAGES ===== */
+.message-enhanced.category-warning {
+  @apply bg-yellow-50 border-l-yellow-400 text-yellow-800;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.message-enhanced.category-warning:hover {
+  @apply bg-yellow-100;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.message-enhanced.category-warning::before {
+  content: '⚠️';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 18px;
+  animation: pulse 2s infinite;
+}
+
+/* ===== INFO MESSAGES ===== */
+.message-enhanced.category-info {
+  @apply bg-blue-50 border-l-blue-400 text-blue-800;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.message-enhanced.category-info:hover {
+  @apply bg-blue-100;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.message-enhanced.category-info::before {
+  content: '💡';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 18px;
+}
+
+/* ===== CODE MESSAGES & SNIPPETS ===== */
+.message-enhanced.category-code {
+  @apply bg-gray-900 border-l-blue-400 text-gray-100;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  font-family: 'Fira Code', 'Monaco', 'Courier New', monospace;
+}
+
+.message-enhanced.category-code:hover {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+}
+
+/* ===== CODE BLOCK CONTAINERS ===== */
+.code-block-container {
+  @apply rounded-lg overflow-hidden mb-4 border border-gray-600;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.code-block-header {
+  @apply bg-gray-800 px-4 py-2 flex items-center justify-between border-b border-gray-600;
+  background: linear-gradient(90deg, #374151 0%, #4b5563 100%);
+}
+
+.code-language {
+  @apply text-xs font-semibold text-blue-400 uppercase tracking-wider;
+  font-family: 'Fira Code', monospace;
+}
+
+.copy-button {
+  @apply text-xs bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded transition-all duration-200 text-white font-medium;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.copy-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.copy-button:active {
+  transform: translateY(0);
+}
+
+.code-block {
+  @apply bg-gray-900 text-gray-100 p-4 text-sm leading-relaxed overflow-x-auto;
+  font-family: 'Fira Code', 'Monaco', 'Courier New', monospace;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.code-block code {
+  @apply text-gray-100;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Syntax highlighting for code blocks */
+.language-javascript .token.keyword { color: #c792ea; }
+.language-javascript .token.string { color: #c3e88d; }
+.language-javascript .token.function { color: #82aaff; }
+.language-javascript .token.comment { color: #546e7a; }
+
+.language-typescript .token.keyword { color: #c792ea; }
+.language-typescript .token.string { color: #c3e88d; }
+.language-typescript .token.function { color: #82aaff; }
+.language-typescript .token.comment { color: #546e7a; }
+
+.language-python .token.keyword { color: #ff5370; }
+.language-python .token.string { color: #c3e88d; }
+.language-python .token.function { color: #82aaff; }
+
+.language-css .token.property { color: #c792ea; }
+.language-css .token.string { color: #c3e88d; }
+.language-css .token.selector { color: #f07178; }
+
+/* ===== HEADERS & SECTIONS ===== */
+.message-enhanced h1 {
+  @apply text-2xl font-bold mb-4 text-gray-900 flex items-center gap-2;
+  color: inherit;
+}
+
+.message-enhanced h2 {
+  @apply text-xl font-semibold mb-3 text-gray-800 flex items-center gap-2;
+  color: inherit;
+}
+
+.message-enhanced h3 {
+  @apply text-lg font-medium mb-2 text-gray-700 flex items-center gap-2;
+  color: inherit;
+}
+
+/* Dark theme adjustments for headers */
+.category-code h1,
+.category-code h2, 
+.category-code h3 {
+  color: #f3f4f6;
+}
+
+/* ===== LISTS & BULLET POINTS ===== */
+.message-enhanced ul {
+  @apply list-none pl-0 space-y-2 mb-4;
+}
+
+.message-enhanced ul li {
+  @apply flex items-start gap-2 text-sm;
+  line-height: 1.6;
+}
+
+.message-enhanced ul li::before {
+  content: '📝';
+  font-size: 14px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* Success list items */
+.category-success ul li::before {
+  content: '✅';
+}
+
+/* Error list items */
+.category-error ul li::before {
+  content: '❌';
+}
+
+/* Warning list items */
+.category-warning ul li::before {
+  content: '⚠️';
+}
+
+/* ===== HIGHLIGHTS & EMPHASIS ===== */
+.message-enhanced strong {
+  @apply font-semibold;
+  color: inherit;
+}
+
+.message-enhanced em {
+  @apply italic;
+  color: inherit;
+}
+
+.message-enhanced mark,
+.message-enhanced .highlight {
+  @apply bg-yellow-200 px-1 rounded;
+  background: linear-gradient(120deg, #fef08a 0%, #fde047 100%);
+  color: #78350f;
+}
+
+/* Dark theme highlights */
+.category-code mark,
+.category-code .highlight {
+  @apply bg-yellow-900 text-yellow-200;
+  background: linear-gradient(120deg, #78350f 0%, #a16207 100%);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-enhanced {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .message-enhanced {
+    @apply px-3 py-3 mb-3;
+  }
+  
+  .code-block-container {
+    @apply mb-3;
+  }
+  
+  .code-block {
+    @apply p-3 text-xs;
+  }
+  
+  .code-block-header {
+    @apply px-3 py-2;
+  }
+}
+
+/* ===== SPECIAL GEORGIAN FORMATTING ===== */
+.message-enhanced .georgian-signature {
+  @apply text-center text-sm text-gray-500 italic mt-4 pt-4 border-t border-gray-200;
+}
+
+.category-code .georgian-signature {
+  @apply text-gray-400 border-gray-700;
+}
+
+/* Georgian text styling */
+.message-enhanced .georgian-text {
+  font-family: 'Noto Sans Georgian', 'Arial', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .message-enhanced {
+    @apply shadow-none border-l-4;
+    break-inside: avoid;
+  }
+  
+  .copy-button {
+    display: none;
+  }
+  
+  .message-enhanced::before {
+    display: none;
+  }
+}

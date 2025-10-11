@@ -1,0 +1,729 @@
+{
+  "aiDeveloper": {
+    "title": "AI Developer",
+    "explorer": "Explorer",
+    "chat": "Chat",
+    "logs": "Logs",
+    "saveFile": "Save File",
+    "searchFiles": "Search files...",
+    "aiServiceHealth": "AI Service Health",
+    "selectFile": "Select a file to start editing",
+    "askAi": "Ask AI or use /load, /save, /describe commands...",
+    "send": "Send",
+    "systemLogs": "System logs will appear here...",
+    "tests": {
+      "searchPlaceholder": "Search by name or path",
+      "heading": {
+        "title": "Tests lab",
+        "refreshing": "Refreshing…"
+      },
+      "filters": {
+        "all": "All",
+        "npm": "npm",
+        "node": "node",
+        "cypress": "cypress",
+        "legacy": "legacy"
+      },
+      "buttons": {
+        "new": "New Test",
+        "newPrimary": "Create your first test",
+        "retry": "Retry now",
+        "run": "Run",
+        "copy": "Copy",
+        "stop": "Stop"
+      },
+      "warnings": {
+        "tsx": "TypeScript node:test files detected. Install \"tsx\" to execute them from the panel."
+      },
+      "status": {
+        "warmup": "Service warming up — tests will appear shortly.",
+        "unavailable": "Test service temporarily unavailable (503).",
+        "abort": "Request cancelled.",
+        "loading": "Loading tests…",
+        "warmupTitle": "Service warming up",
+        "emptyTitle": "No tests found",
+        "warmupDescription": "The test service is starting up. Results will appear automatically once discovery finishes.",
+        "emptyDescription": "Create your first test to start monitoring and running suites directly from the AI Developer panel.",
+        "noTestsCTA": "Create your first test",
+        "serviceCTA": "Retry now"
+      },
+      "alerts": {
+        "startFailed": "Unable to start test run",
+        "startError": "Failed to start test. Check console for details.",
+        "stopFailed": "Failed to stop test run",
+        "stopError": "Failed to stop test run. Check console for details."
+      },
+      "sections": {
+        "npm": {
+          "title": "npm Scripts",
+          "description": "package.json test scripts"
+        },
+        "node": {
+          "title": "Node test suites",
+          "description": "node:test files from __tests__ folders"
+        },
+        "cypress": {
+          "title": "Cypress suites",
+          "description": "End-to-end scenarios"
+        },
+        "legacy": {
+          "title": "Legacy files",
+          "description": "Outdated or non-executable test artifacts"
+        },
+        "empty": "No {{section}} available."
+      },
+      "list": {
+        "runningBadge": "Running",
+        "disabledReason": "A test is already running",
+        "runAria": "Run {{label}}",
+        "legacyBadge": "Legacy",
+        "legacyDisabled": "Legacy files cannot run from this panel.",
+        "outdated": {
+          "documentation": "Documentation artifact — safe to remove if unused.",
+          "unsupportedExtension": "Unsupported extension {{extension}} — convert to node:test or remove.",
+          "generic": "Outdated test file — safe to remove."
+        }
+      },
+      "summary": {
+        "total": "Total test files",
+        "runnable": "Runnable tests",
+        "legacy": "Legacy files"
+      },
+      "runner": {
+        "title": "Test runner",
+        "subtitle": "Select a test to begin streaming logs.",
+        "status": {
+          "idle": "Idle",
+          "running": "Running",
+          "passed": "Passed",
+          "failed": "Failed"
+        },
+        "codeLabel": "(code {{code}})",
+        "filterPlaceholder": "Filter logs",
+        "filterAria": "Filter log output",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "copyFailed": "Copy failed",
+        "noLogs": "No log output yet. Logs will appear here once the test starts emitting."
+      },
+      "modal": {
+        "title": "Create a new test",
+        "subtitle": "Choose test type and location to scaffold a template.",
+        "nameLabel": "Test name",
+        "namePlaceholder": "Smoke test",
+        "typeLabel": "Test type",
+        "locationLabel": "Location",
+        "nodeOption": "Node test (node:test)",
+        "cypressOption": "Cypress e2e",
+        "cancel": "Cancel",
+        "submit": "Create test",
+        "submitting": "Creating…",
+        "close": "Close",
+        "errors": {
+          "nameRequired": "Name is required",
+          "locationRequired": "Select a target folder",
+          "createFailed": "Unable to create test",
+          "unexpected": "Unexpected error while creating test"
+        }
+      }
+    },
+    "secrets": {
+      "searchPlaceholder": "Search secrets by key",
+      "searchAria": "Search secrets by key",
+      "actions": {
+        "refresh": "Refresh secrets list",
+        "new": "New secret",
+        "copyKey": "Copy key",
+        "copyValue": "Copy value",
+        "findUsages": "Find usages",
+        "edit": "Edit secret",
+        "delete": "Delete secret",
+        "showValue": "Reveal value",
+        "hideValue": "Hide value"
+      },
+      "clipboard": {
+        "copiedKey": "Key copied to clipboard",
+        "copiedValue": "Value copied to clipboard",
+        "failed": "Unable to copy to clipboard",
+        "revealFirst": "Reveal the value before copying."
+      },
+      "reveal": {
+        "hiddenTooltip": "This value is currently hidden.",
+        "ready": "Value revealed. Use the copy button to grab it.",
+        "failed": "Unable to reveal value",
+        "loading": "Revealing…",
+        "disabled": "Value is hidden"
+      },
+      "table": {
+        "key": "Key",
+        "value": "Value",
+        "visibility": "Visibility",
+        "source": "Source",
+        "updated": "Last updated"
+      },
+      "empty": {
+        "searchTitle": "No results for this search",
+        "searchDescription": "Try a different key or clear the filter.",
+        "title": "No secrets yet",
+        "description": "Create your first secret to securely store credentials for the automation stack."
+      },
+      "flags": {
+        "hasValue": "Encrypted value stored",
+        "noValue": "No value yet"
+      },
+      "visibility": {
+        "visible": "Visible",
+        "hidden": "Hidden"
+      },
+      "source": {
+        "app": "App",
+        "account": "Account",
+        "scanned": "Scanned"
+      },
+      "value": {
+        "empty": "No value set"
+      },
+      "metrics": {
+        "status": {
+          "unknown": "Status unknown"
+        },
+        "total": "Total secrets in vault",
+        "totalHint": "Counts application, account, and scanned secrets.",
+        "requiredMissing": "Required secrets missing",
+        "requiredMissingClear": "Mark required secrets as resolved",
+        "lastStatus": "Last sync status",
+        "lastStatusPending": "Pending first sync",
+        "queueLength": "Sync queue length",
+        "queueLengthClear": "Clear queue metrics"
+      },
+      "error": {
+        "correlation": "Correlation ID: {{id}}"
+      },
+      "pagination": {
+        "page": "Page",
+        "of": "of",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "modals": {
+        "keyLabel": "Key",
+        "valueLabel": "Value",
+        "visibilityLabel": "Visibility",
+        "sourceLabel": "Source",
+        "cancel": "Cancel",
+        "create": "Create secret",
+        "save": "Save changes",
+        "createTitle": "Create secret",
+        "editTitle": "Edit secret",
+        "subtitle": "Store sensitive values securely with encryption.",
+        "close": "Close editor",
+        "valueHint": "Leave blank to keep existing value.",
+        "valueDescription": "Values are encrypted before storage. They never leave the server unencrypted.",
+        "validation": {
+          "keyRequired": "Key is required.",
+          "noChanges": "No changes to save."
+        },
+        "successCreated": "Secret created successfully.",
+        "successUpdated": "Secret updated successfully.",
+        "error": {
+          "generic": "Unable to save secret."
+        },
+        "saving": "Saving…"
+      },
+      "delete": {
+        "title": "Delete secret?",
+        "description": "This action will remove {{key}} and cannot be undone.",
+        "close": "Close confirmation dialog",
+        "success": "Secret deleted.",
+        "error": "Unable to delete secret.",
+        "deleting": "Deleting…",
+        "confirm": "Delete secret"
+      },
+      "usages": {
+        "title": "Usages for {{key}}",
+        "subtitle": "All references grouped by workspace module.",
+        "close": "Close usages drawer",
+        "error": "Unable to load usages.",
+        "empty": "No usages found in the indexed modules.",
+        "copySuccess": "Location copied.",
+        "copyPath": "Copy file path",
+        "sectionEmpty": "No references in this module.",
+        "noContext": "No preview available.",
+        "modules": {
+          "frontend": "Frontend",
+          "backend": "Backend",
+          "ai": "AI Service"
+        }
+      },
+      "scanner": {
+        "title": "Repository scanner",
+        "subtitle": "Scan source files for env usages and propose placeholders.",
+        "running": "Scanning…",
+        "cta": "Scan files",
+        "noFindings": "No missing secrets detected.",
+        "error": "Unable to run scan.",
+        "correlation": "Correlation ID: {{id}}",
+        "empty": "Run the scanner to see missing secrets suggestions.",
+        "columns": {
+          "key": "Key",
+          "foundIn": "Found in",
+          "scope": "Scope",
+          "visibility": "Visibility",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "status": {
+          "missing": "Missing",
+          "ready": "Ready",
+          "exists": "Exists"
+        },
+        "create": "Create placeholder",
+        "refresh": "Refresh list",
+        "placeholder": "Opening editor with suggested values."
+      }
+    }
+  },
+  "aiImprove": {
+    "sidebar": {
+      "brain": "Brain",
+      "backendMonitor": "Backend monitor",
+      "autoUpdate": "Auto update",
+      "securityAudit": "Security audit",
+      "logs": "Logs",
+      "activity": "Activity",
+      "digitalMonitor": "Digital monitor",
+      "operations": "Operations",
+      "securityCenter": "Security & activity",
+      "ariaLabel": "Auto-Improve navigation",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "status": {
+        "ok": "Stable",
+        "degraded": "Delayed",
+        "offline": "Limited"
+      },
+      "sections": "Auto-Improve sections"
+    },
+    "brain": {
+      "title": "Brain",
+      "heading": "Gurulo's brain orchestrates the full improvement cycle",
+      "description": "As soon as the services power on, Gurulo automatically starts searching for issues, refreshing code, running tests, and preparing updates for approval.",
+      "status": {
+        "title": "Brain status",
+        "active": "Active",
+        "degraded": "Degraded",
+        "offline": "Offline",
+        "online": "Online"
+      },
+      "digital": {
+        "heading": "Digital monitor",
+        "subtitle": "Numbers, progress, and Gurulo's pulse in one view.",
+        "subtitleNew": "Track Gurulo's brain pulse – everything on a live operations board.",
+        "statusCaption": "Activity in the last minute",
+        "queueLabel": "Queue",
+        "queueHelper": "Active tasks",
+        "latencyLabel": "Response",
+        "ms": "ms",
+        "successLabel": "Stability",
+        "successHelper": "Positive outcomes",
+        "percent": "%",
+        "testsLabel": "Tests",
+        "testsHelper": "Automation run this cycle",
+        "focusLabel": "Current focus",
+        "throughputLabel": "Throughput",
+        "throughputHelper": "Ops per minute",
+        "monitorTitle": "Gurulo monitor",
+        "refresh": "Refresh",
+        "activeLabel": "Gurulo active",
+        "updateLabel": "Last update",
+        "lastRun": "Last cycle",
+        "errorLabel": "Errors",
+        "errorNone": "0",
+        "modeLabel": "Mode",
+        "throughputValue": "{{count}} ops/min",
+        "details": {
+          "title": "Gurulo insights",
+          "close": "Close",
+          "latencyTitle": "Response",
+          "latencyHelper": "Average reaction time in the current cycle.",
+          "successTitle": "Stability",
+          "successHelper": "Share of operations without errors.",
+          "errorsRow": "Errors",
+          "testsTitle": "Tests",
+          "testsHelper": "Percentage of automated tests completed.",
+          "testsPassed": "Passed",
+          "decision": "Decision"
+        }
+      },
+      "logs": {
+        "empty": "No logs yet. Once Gurulo takes action, detailed records will appear here.",
+        "now": "Just now"
+      },
+      "sidebar": {
+        "tooltip": "Gurulo's brain digital monitor",
+        "tooltipDetailed": "Quick status of Gurulo's brain",
+        "tasksBadge": "{{count}} active",
+        "tasksFallback": "N/A",
+        "error": "Error: N/A",
+        "offline": "Limited mode",
+        "analysis": "Analysis",
+        "last": "Last",
+        "activity": "Activity",
+        "lastLabel": "Last",
+        "lastUnknown": "Unknown",
+        "monitoring": "Brain monitor standby",
+        "pulse": "Brain Pulse",
+        "standby": "Standby"
+      },
+      "stats": {
+        "queue": "Queue",
+        "response": "Response time",
+        "success": "Success"
+      },
+      "tooltips": {
+        "queue": "Current queue depth",
+        "latency": "Response time in the latest loop",
+        "success": "Stability indicator",
+        "tests": "Percentage of tests passed",
+        "throughput": "Work completed per minute",
+        "refresh": "Refresh status"
+      },
+      "analysis": {
+        "title": "Gurulo is thinking",
+        "offline": "The brain is on standby, waiting for all services to come online.",
+        "testsFailed": "Gurulo is re-analysing the failing tests to pinpoint the root cause.",
+        "focus": "Gurulo is investigating the \"{{title}}\" update and documenting the issue in detail.",
+        "queue": "There are {{count}} tasks in the queue and Gurulo is drafting the execution plan.",
+        "degraded": "Data is slightly delayed, but Gurulo is gathering all required context.",
+        "stable": "Everything looks stable. Gurulo is monitoring for the next improvement opportunity."
+      },
+      "summary": {
+        "title": "Improvement package",
+        "fullTitle": "Code improvement details",
+        "subtitle": "Gurulo discovers issues, explains the problem, and patches the relevant files.",
+        "empty": "No issues detected right now",
+        "emptyDescription": "The brain is collecting ideas for the next enhancements while keeping the system stable.",
+        "status": {
+          "ok": "Completed",
+          "warning": "Needs attention",
+          "error": "Critical",
+          "paused": "On hold"
+        }
+      },
+      "tests": {
+        "title": "Testing progress",
+        "subtitle": "Every update passes through seven quality gates.",
+        "boardTitle": "Seven-stage testing pipeline",
+        "boardSubtitle": "Each improvement is validated by automated and AI-supervised checks.",
+        "status": {
+          "pending": "Pending",
+          "running": "Running",
+          "passed": "Passed",
+          "failed": "Failed"
+        },
+        "names": {
+          "unit": "Unit tests",
+          "integration": "Integration tests",
+          "e2e": "End-to-end journeys",
+          "performance": "Performance checks",
+          "security": "Security audit",
+          "ui": "Interface review",
+          "regression": "Regression guard"
+        },
+        "descriptions": {
+          "unit": "Validates the fundamental logic and core behaviours.",
+          "integration": "Verifies that the frontend and backend work together.",
+          "e2e": "Simulates a full user flow and confirms the end result.",
+          "performance": "Keeps memory and speed within the optimal thresholds.",
+          "security": "Scans for weak spots and checks protection protocols.",
+          "ui": "Ensures interface consistency and modern visuals.",
+          "regression": "Guarantees existing functionality keeps working."
+        }
+      },
+      "workflow": {
+        "title": "Intelligent cycle",
+        "caption": "Complete path: Activation → Analysis → Code → Tests → Review → Deployment",
+        "status": {
+          "pending": "Pending",
+          "active": "In progress",
+          "done": "Completed",
+          "failed": "Attention needed"
+        },
+        "activation": {
+          "title": "Service activation",
+          "ready": "All core services are online and the brain is ready to work.",
+          "waiting": "Waiting for the services to fully warm up before the brain starts."
+        },
+        "analysis": {
+          "title": "Issue analysis",
+          "active": "Gurulo is tracing the root cause and assembling an action plan.",
+          "done": "Recent analyses are complete and we are ready for the next tasks."
+        },
+        "coding": {
+          "title": "Code update",
+          "active": "Gurulo is refreshing the necessary files and documenting each change.",
+          "done": "Code updates are ready and standing by for testing."
+        },
+        "testing": {
+          "title": "Testing stage",
+          "active": "Tests are running and results update in real time.",
+          "done": "All seven tests confirmed the update.",
+          "failed": "Gurulo is fixing the failing tests and re-running the suite."
+        },
+        "review": {
+          "title": "Update review",
+          "active": "All evidence has been delivered to the review board.",
+          "done": "The update is confirmed and ready to be deployed.",
+          "failed": "Gurulo will refine the changes and send a new package."
+        },
+        "deployment": {
+          "title": "Deployment",
+          "pending": "Deployment will happen instantly after approval.",
+          "done": "The code change is already live on the site."
+        }
+      },
+      "review": {
+        "title": "Approve updates",
+        "subtitle": "The brain sends every detail to the review arena so you can accept or return the change.",
+        "testsPassed": "Tests passed",
+        "queue": "Queue remaining",
+        "health": "System status",
+        "pending": "Your decision is needed to deploy the update.",
+        "approved": "Update approved — the change is live.",
+        "rejected": "Update returned for refinement. Gurulo is preparing an improved version.",
+        "awaitingTests": "All tests must finish before the approval is unlocked.",
+        "approve": "Approve update",
+        "reject": "Request changes",
+        "resubmit": "Re-open review",
+        "decisionTime": "Last decision: {{time}}"
+      }
+    },
+    "metrics": {
+      "queue": {
+        "title": "Tasks in queue",
+        "description": "Real-time volume of scheduled work",
+        "unit": "task",
+        "progress": "System load",
+        "rate": "{{rate}}/s",
+        "updated": "Updated",
+        "logCount": "{{count}} tasks queued",
+        "logMode": "Mode: {{mode}}",
+        "logUnknown": "⚠️ Live data temporarily unavailable"
+      },
+      "latency": {
+        "title": "Response time",
+        "description": "Latest 95th percentile performance",
+        "rate": "{{rate}} tasks/s",
+        "mode": "Mode",
+        "log": "Response time: {{time}}ms",
+        "updated": "Last update {{time}}"
+      },
+      "success": {
+        "title": "Testing success",
+        "description": "Percentage of completed work that succeeded",
+        "progress": "Progress",
+        "errorRate": "Errors",
+        "logRate": "Success: {{rate}}%",
+        "logUpdated": "Updated {{time}}"
+      },
+      "mode": {
+        "title": "System mode",
+        "description": "Control the auto-improvement process",
+        "log": "Current mode: {{mode}}",
+        "lastRun": "Last run: {{time}}",
+        "pause": "Pause",
+        "resume": "Resume",
+        "auto": "Automatic",
+        "manual": "Manual",
+        "paused": "Paused"
+      },
+      "never": "Never",
+      "unknown": "Unknown"
+    },
+    "strip": {
+      "updated": "Updated {{time}}",
+      "never": "Never",
+      "state": {
+        "offline": "Limited mode",
+        "degraded": "Delayed",
+        "ok": "Stable"
+      },
+      "rows": "Rows",
+      "latency": "Latency",
+      "success": "Success",
+      "paused": "Paused",
+      "copy": "Copy",
+      "export": "Export CSV"
+    },
+    "filters": {
+      "allModels": "All models",
+      "ariaLabel": "Filters for the auto-improve tab",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Search managers...",
+      "modelLabel": "Model",
+      "refresh": "Refresh"
+    },
+    "metric": {
+      "progress": "Progress",
+      "latency": "Latency",
+      "successRate": "Success",
+      "model": "Model",
+      "updated": "Updated",
+      "status": {
+        "ok": "Stable",
+        "warning": "Caution",
+        "error": "Error",
+        "paused": "Paused"
+      },
+      "logs": "Logs",
+      "show": "Show",
+      "hide": "Hide",
+      "logsRegion": "Detailed metric logs"
+    },
+    "empty": {
+      "title": "No data yet",
+      "description": "The system is still collecting metrics. Try refreshing or adjust the filters.",
+      "offlineTitle": "Limited mode",
+      "offlineDescription": "Reconnect or try again later. Current metrics are temporarily unavailable.",
+      "pollingDisabledTitle": "Polling disabled",
+      "pollingDisabledDescription": "Automatic refresh is paused. Results will appear after a manual refresh.",
+      "retry": "Try again"
+    },
+    "banner": {
+      "offline": "Auto-refresh is paused while the services reconnect...",
+      "degraded": "Data refresh is running behind. Recovery in progress..."
+    },
+    "access": {
+      "deniedTitle": "🔒 Access denied",
+      "deniedBody": "Only administrators can access the Auto-Improve system"
+    }
+  },
+  "replitInterface": {
+    "welcomeMessage": "Welcome to Replit AI Assistant! How can I help you today?",
+    "systemStarted": "System started successfully",
+    "aiServiceConnected": "AI service connected",
+    "aiErrorResponse": "Sorry, I encountered an error with the AI service",
+    "connectionError": "Connection error - please try again",
+    "aiThinking": "AI is thinking...",
+    "askAiPlaceholder": "Ask AI about your code...",
+    "clearChat": "Clear chat",
+    "refresh": "Refresh",
+    "clearLogs": "Clear logs",
+    "aiAssistant": "AI Assistant",
+    "deploying": "Deploying..."
+  },
+  "common": {
+    "AI Developer Panel": "AI Developer Panel",
+    "Explorer": "Explorer",
+    "Comments": "Comments",
+    "Logs": "Logs",
+    "Statistics": "Statistics",
+    "Search files...": "Search files...",
+    "Total Files": "Total Files",
+    "Lines of Code": "Lines of Code",
+    "Languages": "Languages",
+    "Light Mode": "Light Mode",
+    "Dark Mode": "Logout",
+    "Save": "Save",
+    "Settings": "Settings",
+    "No file selected": "No file selected",
+    "Select a file from the explorer to start editing": "Select a file from the explorer to start editing",
+    "AI Assistant": "AI Assistant",
+    "Start a conversation with the AI assistant": "Start a conversation with the AI assistant",
+    "AI is thinking...": "AI is thinking...",
+    "Ask AI about your code...": "Ask AI about your code...",
+    "File saved successfully": "File saved successfully",
+    "Failed to save file": "Failed to save file",
+    "Failed to load file": "Failed to load file",
+    "Error loading project statistics": "Error loading project statistics",
+    "Project Overview": "Project Overview",
+    "Recent Activity": "Recent Activity",
+    "Code Quality": "Code Quality",
+    "Performance": "Performance"
+  },
+  "systemStatus": {
+    "title": "System Status",
+    "overallHealth": "Overall Health",
+    "apiConnections": "API Connections", 
+    "databaseStatus": "Database Status",
+    "lastUpdate": "Last Update"
+  },
+  "aiDeveloper": {
+    "title": "AI Developer",
+    "explorer": "Explorer",
+    "chat": "Chat",
+    "logs": "Logs",
+    "saveFile": "Save File",
+    "loadingFile": "Loading file...",
+    "selectFile": "Select a file to start editing",
+    "searchFiles": "Search files...",
+    "aiAssistantReady": "AI Assistant Ready",
+    "askQuestions": "Ask questions about your code",
+    "slashCommands": "Slash Commands",
+    "systemLogs": "System Logs"
+  },
+  "futuristicChat": {
+    "availability": {
+      "user": "Gurulo is temporarily unavailable. Please try again later.",
+      "adminTitle": "Gurulo is temporarily unavailable.",
+      "adminAnalysis": "Code: {{code}} • Status: {{status}} • Latency: {{latency}}ms • Endpoint: {{endpoint}} • Retry ≈{{retryIn}}s.",
+      "offlineBadge": "🔴 Offline",
+      "retry": "Try again"
+    }
+  },
+  "chat": {
+    "greeting": {
+      "reply": {
+        "text": "Hi! I'm Gurulo, your Bakhmaro trip guide. Share when you're visiting and I'll line up cozy cottages and ideas.",
+        "actions": [
+          { "label": "Next weekend availability", "value": "Check Bakhmaro cottages next weekend" },
+          { "label": "Plan a 3-day getaway", "value": "Plan a 3-day Bakhmaro getaway" }
+        ]
+      }
+    },
+    "guard": {
+      "onlyConsumerTopics": "I'm here to help with guest topics only—Bakhmaro cottages, pricing, weather, routes, and tours. I can't assist with technical questions.",
+      "retryAskDates": "Share dates and guest count"
+    },
+    "tripPlan": {
+      "cta": "Plan in 3 steps"
+    },
+    "pricing": {
+      "cta": "Pricing rules"
+    },
+    "weather": {
+      "cta": "View detailed weather"
+    },
+    "availability": {
+      "cta": "Check availability",
+      "askParams": "Tell me check-in/check-out dates and guest count so I can confirm availability right away."
+    }
+  },
+  "backup": {
+    "title": "Backup",
+    "status": "Status",
+    "create": "Create backup",
+    "restore": "Restore",
+    "delete": "Delete",
+    "disabled": "Backup service disabled",
+    "disabledDescription": "The backup service is currently unavailable. Actions are disabled.",
+    "empty": "No backups available yet",
+    "autoRefresh": "Auto refresh",
+    "refresh": "Refresh",
+    "lastUpdated": "Last refresh",
+    "statusUnknown": "Unknown",
+    "lastBackup": "Last backup",
+    "lastBackupUnknown": "Unknown",
+    "totalBackups": "Total backups",
+    "storageLocation": "Storage location",
+    "createSuccess": "Backup created successfully",
+    "restoreSuccess": "Backup restored successfully",
+    "deleteSuccess": "Backup deleted",
+    "actionError": "Failed to {{action}}",
+    "actions": "Actions",
+    "list": "Backups",
+    "size": "Size",
+    "sizeUnknown": "Unknown",
+    "id": "ID"
+  }
+}

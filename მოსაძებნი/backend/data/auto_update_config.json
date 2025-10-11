@@ -1,0 +1,34 @@
+{
+  "config": {
+    "masterSwitch": "propose-only",
+    "scopes": {
+      "guruloCore": true,
+      "frontendUI": true,
+      "adminPanel": true,
+      "backend": true,
+      "aiService": true
+    },
+    "limits": {
+      "maxChangesPerDay": 5,
+      "maxFilesPerCycle": 3,
+      "timeWindow": {
+        "start": "00:00",
+        "end": "23:00"
+      }
+    },
+    "guards": {
+      "highRiskProposalOnly": true,
+      "configSecretMigrationBlock": true
+    },
+    "canary": {
+      "canaryBranch": "canary",
+      "mainBranch": "main",
+      "canaryTTL": 3600,
+      "autoRollbackOnFailure": true,
+      "smokeTestTimeout": 300,
+      "promotionTimeout": 600
+    }
+  },
+  "lastUpdated": "2025-09-21T18:25:29.903Z",
+  "updatedBy": "unknown"
+}

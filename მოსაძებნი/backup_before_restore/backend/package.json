@@ -1,0 +1,36 @@
+{
+  "name": "bakhmaro-backend",
+  "version": "1.0.0",
+  "description": "Backend server for Bakhmaro Cottages platform",
+  "main": "index.js",
+  "scripts": {
+    "superadmin:create": "node scripts/createSuperAdmin.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "env:verify": "node scripts/verifyEnv.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "axios": "^1.11.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.0.1",
+    "express-session": "^1.18.2",
+    "firebase-admin": "^13.4.0",
+    "helmet": "^8.1.0",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.20.1"
+  },
+  "keywords": [
+    "backend",
+    "api",
+    "nodejs",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT"
+}

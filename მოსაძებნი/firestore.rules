@@ -1,0 +1,254 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() in ['ADMIN', 'SUPER_ADMIN'];
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'SUPER_ADMIN';
+    }
+    
+    function isProvider() {
+      return isAuthenticated() && getUserRole() == 'PROVIDER';
+    }
+    
+    function isCustomer() {
+      return isAuthenticated() && getUserRole() == 'CUSTOMER';
+    }
+    
+    function isOwnerOrAdmin(userId) {
+      return isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Users collection - Enhanced permissions
+    match /users/{userId} {
+      // Users can read/write their own data
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Admins can read all users
+      allow read: if isAdmin();
+      
+      // Super admins can create/update/delete users
+      allow create, update, delete: if isSuperAdmin();
+      
+      // Providers can read basic user info for their bookings
+      allow read: if isProvider() && 
+        exists(/databases/$(database)/documents/bookings/$(resource.id)) &&
+        get(/databases/$(database)/documents/bookings/$(resource.id)).data.providerId == request.auth.uid;
+    }
+
+    // Bookings collection - Comprehensive permissions
+    match /bookings/{bookingId} {
+      // Customers can read their own bookings
+      allow read: if isAuthenticated() && 
+        (resource.data.customerInfo.userId == request.auth.uid || 
+         resource.data.phone == request.auth.token.phone);
+      
+      // Providers can read/update their own property bookings
+      allow read, update: if isAuthenticated() && resource.data.providerId == request.auth.uid;
+      
+      // Admins have full access
+      allow read, write: if isAdmin();
+      
+      // Authenticated users can create bookings
+      allow create: if isAuthenticated() && 
+        request.resource.data.status == 'pending' &&
+        request.resource.data.keys().hasAll(['customerName', 'customerEmail', 'customerPhone']);
+      
+      // Providers can only update specific fields
+      allow update: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'isPaid', 'rating', 'updatedAt']);
+    }
+
+    // Vehicle Bookings collection
+    match /vehicleBookings/{bookingId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.phone == request.auth.token.phone || 
+         resource.data.providerId == request.auth.uid ||
+         isAdmin());
+      
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+        (resource.data.providerId == request.auth.uid || isAdmin());
+    }
+
+    // Hotel Bookings collection
+    match /hotelBookings/{bookingId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.phone == request.auth.token.phone || 
+         resource.data.providerId == request.auth.uid ||
+         isAdmin());
+      
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+        (resource.data.providerId == request.auth.uid || isAdmin());
+    }
+
+    // Cottages collection - Provider and Admin access
+    match /cottages/{cottageId} {
+      // Public read access for listings
+      allow read: if true;
+      
+      // Providers can create their own cottages
+      allow create: if isAuthenticated() && 
+        request.resource.data.providerId == request.auth.uid;
+      
+      // Providers can update/delete their own cottages
+      allow update, delete: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid;
+      
+      // Admins have full access
+      allow write: if isAdmin();
+    }
+
+    // Vehicles collection
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+        request.resource.data.providerId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid;
+      allow write: if isAdmin();
+    }
+
+    // Hotels collection
+    match /hotels/{hotelId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+        request.resource.data.providerId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid;
+      allow write: if isAdmin();
+    }
+
+    // Commissions collection - Admin and Provider access
+    match /commissions/{commissionId} {
+      // Providers can read their own commissions
+      allow read: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/bookings/$(resource.data.bookingId)) &&
+        get(/databases/$(database)/documents/bookings/$(resource.data.bookingId)).data.providerId == request.auth.uid;
+      
+      // Admins have full access
+      allow read, write: if isAdmin();
+      
+      // System can create commissions (via cloud functions)
+      allow create: if true;
+    }
+
+    // Conversations collection - Enhanced messaging permissions
+    match /conversations/{conversationId} {
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid in resource.data.participantIds;
+      
+      // Admins can access all conversations
+      allow read, write: if isAdmin();
+      
+      // Users can create conversations
+      allow create: if isAuthenticated() && 
+        request.auth.uid in request.resource.data.participantIds;
+    }
+
+    // Messages subcollection
+    match /conversations/{conversationId}/messages/{messageId} {
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+      
+      allow read, write: if isAdmin();
+    }
+
+    // Admin conversations
+    match /admin_conversations/{conversationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /admin_conversations/{conversationId}/messages/{messageId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+      
+      allow read, write: if isAdmin();
+      
+      // System can create notifications
+      allow create: if true;
+    }
+
+    // Logs collection - Admin only
+    match /logs/{logId} {
+      allow read, write: if isAdmin();
+      
+      // System can create logs
+      allow create: if true;
+    }
+
+    // Reviews collection
+    match /reviews/{reviewId} {
+      // Public read access
+      allow read: if true;
+      
+      // Users can create reviews for their bookings
+      allow create: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)) &&
+        get(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.customerInfo.userId == request.auth.uid;
+      
+      // Users can update their own reviews
+      allow update: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      
+      // Admins have full access
+      allow write: if isAdmin();
+    }
+
+    // Bank accounts collection - Provider access
+    match /bankAccounts/{accountId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid;
+      
+      allow read, write: if isAdmin();
+    }
+
+    // Analytics collection - Admin only
+    match /analytics/{analyticsId} {
+      allow read, write: if isAdmin();
+      
+      // System can create analytics
+      allow create: if true;
+    }
+
+    // Price overrides collection
+    match /priceOverrides/{overrideId} {
+      allow read: if isAuthenticated();
+      
+      allow create, update, delete: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid;
+      
+      allow write: if isAdmin();
+    }
+
+    // Seasonal pricing collection
+    match /seasonalPricing/{pricingId} {
+      allow read: if true;
+      
+      allow create, update, delete: if isAuthenticated() && 
+        resource.data.providerId == request.auth.uid;
+      
+      allow write: if isAdmin();
+    }
+  }
+}

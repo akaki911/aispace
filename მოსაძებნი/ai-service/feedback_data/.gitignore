@@ -1,0 +1,4 @@
+
+# Local feedback storage
+*.json
+!.gitignore

@@ -1,0 +1,70 @@
+
+# SOL-242: AI Guard Configuration
+# Defines file patterns for Auto-Apply protection levels
+
+# Files that should NEVER be touched by Auto-Apply
+neverTouch:
+  - 'secrets/**'
+  - '.env*'
+  - 'db/migrations/**'
+  - 'firebase-admin-key.json'
+  - 'credentials.json'
+  - '**/*credentials*'
+  - '**/*secret*'
+  - '**/*key*'
+  - '.replit'
+  - 'replit.nix'
+  - 'package.json'
+  - 'package-lock.json'
+  - 'yarn.lock'
+  - 'pnpm-lock.yaml'
+  - 'firebase.json'
+  - 'firestore.rules'
+  - 'firestore.indexes.json'
+  - 'vite.config.ts'
+  - 'tsconfig.json'
+  - '.gitignore'
+  - 'backend/firebaseAdmin.js'
+  - 'ai-service/server.js'
+  - 'backend/index.js'
+  - '**/.env*'
+  - '**/secrets/**'
+
+# Files that require manual review before apply
+manualReview:
+  - 'config/**'
+  - 'infrastructure/**'
+  - 'backend/middleware/**'
+  - 'backend/routes/admin_*'
+  - 'backend/routes/auth*'
+  - 'src/contexts/AuthContext.tsx'
+  - 'src/firebase.ts'
+  - 'ai-service/server.js'
+  - 'backend/index.js'
+
+# Files that can be auto-applied safely
+allowAuto:
+  - 'src/components/**'
+  - 'src/pages/**'
+  - 'src/utils/**'
+  - 'src/hooks/**'
+  - 'styles/**'
+  - 'src/styles/**'
+  - '*.css'
+  - '*.scss'
+  - 'docs/**'
+  - 'README.md'
+  - '*.md'
+
+# Guard enforcement settings
+enforcement:
+  enabled: true
+  blockOnViolation: true
+  auditLog: true
+  uiAlerts: true
+
+# Custom patterns (glob-style matching)
+patterns:
+  criticalFiles: ['backend/index.js', 'ai-service/server.js', 'src/App.tsx']
+  testFiles: ['**/*.test.js', '**/*.spec.js', '**/*.test.ts', '**/*.spec.ts']
+  configFiles: ['**/*.config.js', '**/*.config.ts', '**/*.json']

@@ -1,0 +1,581 @@
+
+openapi: 3.0.3
+info:
+  title: AI Microservice API
+  description: Georgian AI Developer Assistant - Microservice API Contract
+  version: 1.0.0
+  contact:
+    name: AI Service Team
+    email: support@bakhmaro.dev
+servers:
+  - url: http://localhost:5001/v1
+    description: Development server
+  - url: https://ai-service.bakhmaro.dev/v1
+    description: Production server
+
+paths:
+  /ai/chat:
+    post:
+      summary: Send message to AI assistant
+      description: Process chat message and return AI response
+      operationId: chatWithAI
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/models:
+    get:
+      summary: Get available AI models
+      description: Retrieve list of available AI models with their capabilities
+      operationId: getModels
+      tags:
+        - Models
+      responses:
+        '200':
+          description: List of available models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/proposals:
+    get:
+      summary: Get auto-improve proposals
+      description: Retrieve list of pending auto-improvement proposals
+      operationId: getProposals
+      tags:
+        - AutoImprove
+      parameters:
+        - name: status
+          in: query
+          description: Filter proposals by status
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, rejected, applied]
+        - name: limit
+          in: query
+          description: Limit number of results
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of proposals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalsResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create new auto-improve proposal
+      description: Submit a new auto-improvement proposal
+      operationId: createProposal
+      tags:
+        - AutoImprove
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProposalRequest'
+      responses:
+        '201':
+          description: Proposal created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/proposals/{proposalId}:
+    get:
+      summary: Get specific proposal
+      description: Retrieve details of a specific proposal
+      operationId: getProposal
+      tags:
+        - AutoImprove
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          description: Unique proposal identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proposal details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalResponse'
+        '404':
+          description: Proposal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/proposals/{proposalId}/approve:
+    post:
+      summary: Approve proposal
+      description: Approve and apply an auto-improvement proposal
+      operationId: approveProposal
+      tags:
+        - AutoImprove
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          description: Unique proposal identifier
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+      responses:
+        '200':
+          description: Proposal approved and applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '404':
+          description: Proposal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Proposal cannot be approved (wrong status)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Check service health and status
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: User message to AI
+          example: "გამარჯობა, როგორ ხარ?"
+        personalId:
+          type: string
+          description: User identifier for personalized responses
+          example: "01019062020"
+        context:
+          type: object
+          description: Additional context for the AI
+          properties:
+            fileContext:
+              type: array
+              items:
+                type: string
+            projectInfo:
+              type: object
+
+    ChatResponse:
+      type: object
+      required:
+        - success
+        - response
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        response:
+          type: string
+          description: AI response message
+          example: "გამარჯობა! კარგად ვარ, გმადლობთ კითხვისთვის!"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-23T15:30:00Z"
+        personalId:
+          type: string
+          example: "01019062020"
+        model:
+          type: string
+          description: AI model used for response
+          example: "llama-3.3-70b-versatile"
+        usage:
+          type: object
+          properties:
+            tokens:
+              type: integer
+            cost:
+              type: number
+
+    ModelsResponse:
+      type: object
+      required:
+        - success
+        - models
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIModel'
+        timestamp:
+          type: string
+          format: date-time
+
+    AIModel:
+      type: object
+      required:
+        - id
+        - label
+        - category
+      properties:
+        id:
+          type: string
+          example: "llama-3.3-70b-versatile"
+        label:
+          type: string
+          example: "LLaMA 3.3 70B (ძლიერი)"
+        category:
+          type: string
+          enum: [small, medium, large]
+          example: "large"
+        description:
+          type: string
+          example: "ძლიერი მოდელი რთული ამოცანებისთვის"
+        tokens:
+          type: string
+          example: "128K context"
+        pricing:
+          type: object
+          properties:
+            input:
+              type: number
+            output:
+              type: number
+
+    ProposalsResponse:
+      type: object
+      required:
+        - success
+        - proposals
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        proposals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProposalSummary'
+        total:
+          type: integer
+          description: Total number of proposals
+        page:
+          type: integer
+          description: Current page number
+        timestamp:
+          type: string
+          format: date-time
+
+    ProposalSummary:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          example: "proposal_123456"
+        title:
+          type: string
+          example: "Performance improvement for file search"
+        status:
+          type: string
+          enum: [pending, approved, rejected, applied]
+          example: "pending"
+        description:
+          type: string
+          example: "Optimize file search algorithm"
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          example: "medium"
+        createdAt:
+          type: string
+          format: date-time
+        risk:
+          type: string
+          enum: [low, medium, high]
+          example: "low"
+
+    ProposalResponse:
+      type: object
+      required:
+        - success
+        - proposal
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        proposal:
+          $ref: '#/components/schemas/ProposalDetail'
+        timestamp:
+          type: string
+          format: date-time
+
+    ProposalDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProposalSummary'
+        - type: object
+          properties:
+            changes:
+              type: array
+              description: List of proposed file changes
+              items:
+                type: object
+                properties:
+                  file:
+                    type: string
+                  action:
+                    type: string
+                    enum: [create, update, delete]
+                  diff:
+                    type: string
+            tests:
+              type: array
+              description: Test results
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    enum: [passed, failed, skipped]
+                  details:
+                    type: string
+
+    CreateProposalRequest:
+      type: object
+      required:
+        - title
+        - description
+        - changes
+      properties:
+        title:
+          type: string
+          example: "Improve error handling"
+        description:
+          type: string
+          example: "Add better error handling for API calls"
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              file:
+                type: string
+              action:
+                type: string
+                enum: [create, update, delete]
+              content:
+                type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+
+    ApprovalRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          description: Optional approval comment
+        skipTests:
+          type: boolean
+          description: Skip pre-apply tests
+          default: false
+
+    ApprovalResponse:
+      type: object
+      required:
+        - success
+        - proposalId
+        - status
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        proposalId:
+          type: string
+          example: "proposal_123456"
+        status:
+          type: string
+          example: "applied"
+        appliedFiles:
+          type: array
+          items:
+            type: string
+        rollbackId:
+          type: string
+          description: Rollback identifier if needed
+        timestamp:
+          type: string
+          format: date-time
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: "healthy"
+        service:
+          type: string
+          example: "AI Microservice"
+        version:
+          type: string
+          example: "1.0.0"
+        uptime:
+          type: number
+          description: Service uptime in seconds
+        timestamp:
+          type: string
+          format: date-time
+        dependencies:
+          type: object
+          properties:
+            groq:
+              type: boolean
+            firebase:
+              type: boolean
+            memory:
+              type: boolean
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          example: "Required field 'message' is missing"
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+          description: Request correlation ID for debugging
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Chat
+    description: AI chat operations
+  - name: Models
+    description: AI model management
+  - name: AutoImprove
+    description: Auto-improvement proposals
+  - name: Health
+    description: Service health monitoring
