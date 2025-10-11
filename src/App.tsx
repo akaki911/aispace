@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { AIDeveloperRoute, GurulaRoute, SecretsRoute } from './routes';
+import { AIDeveloperRoute, GurulaRoute, NotFoundRoute, SecretsRoute } from './routes';
 import { useAuth } from '@/contexts/useAuth';
 
 const LoginMessage = ({ onLogin }: { onLogin: () => void }) => (
@@ -55,6 +55,7 @@ const AISpaceApp = () => {
         <Route path="developer/secrets" element={<SecretsRoute />} />
         <Route path="developer/gurula" element={<GurulaRoute />} />
         <Route path="developer/*" element={<AIDeveloperRoute />} />
+        <Route path="*" element={<NotFoundRoute />} />
       </Routes>
     </Suspense>
   );
