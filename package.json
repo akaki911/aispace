@@ -5,13 +5,19 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "preinstall": "npm config set registry https://registry.npmjs.org/",
     "dev": "vite",
     "build": "vite build",
     "type-check": "tsc -p tsconfig.app.json --noEmit",
-    "preview": "vite preview --port 4173",
+    "preview": "vite preview --strictPort",
     "deploy": "firebase deploy --only hosting,functions",
     "emulate": "firebase emulators:start --only functions,hosting",
-    "lint:func": "eslint --ext .ts functions/src"
+    "lint:func": "eslint --ext .ts functions/src",
+    "ci:clean": "npm cache clean --force || true",
+    "deps:install": "npm ci --no-audit --no-fund"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.5",

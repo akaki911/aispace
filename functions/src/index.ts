@@ -110,16 +110,26 @@ const commitHash = (() => {
 })();
 
 const app = express();
-const apiRouter = express.Router();
 
-apiRouter.use(cors(corsOptions));
-apiRouter.use(express.json());
-apiRouter.use((_req, res, next) => {
+const publicCorsOptions: CorsOptions = {
+  origin: '*',
+  methods: ['GET', 'OPTIONS'],
+  credentials: false,
+  optionsSuccessStatus: 204,
+};
+
+const publicRouter = express.Router();
+
+publicRouter.use(cors(publicCorsOptions));
+publicRouter.use((_req, res, next) => {
   res.header('Vary', 'Origin');
   next();
 });
 
-apiRouter.get('/version', (_req, res) => {
+publicRouter.get('/version', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.json({
     name: 'aispace',
     version: appVersion,
@@ -131,13 +141,25 @@ apiRouter.get('/version', (_req, res) => {
   });
 });
 
-apiRouter.get('/ai/health', (_req: Request, res: Response) => {
+publicRouter.get('/ai/health', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.json({
     status: 'ok',
     ok: true,
     service: 'aispace-api',
     time: new Date().toISOString(),
   });
+});
+
+const apiRouter = express.Router();
+
+apiRouter.use(cors(corsOptions));
+apiRouter.use(express.json());
+apiRouter.use((_req, res, next) => {
+  res.header('Vary', 'Origin');
+  next();
 });
 
 const SSE_WINDOW_MS = 60_000;
@@ -486,6 +508,7 @@ apiRouter.get('/github/tree', requireGithubSecrets, githubNotImplemented);
 apiRouter.get('/github/file', requireGithubSecrets, githubNotImplemented);
 apiRouter.post('/github/pr', requireGithubSecrets, githubNotImplemented);
 
+app.use('/api', publicRouter);
 app.use('/api', apiRouter);
 
 export const api = onRequest({ region: 'us-central1' }, app);
