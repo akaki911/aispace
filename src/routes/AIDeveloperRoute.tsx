@@ -9,7 +9,7 @@ const loadingFallback = (
 );
 
 const AIDeveloperRoute = () => {
-  const { isAuthenticated, isLoading: authLoading, hasRole } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, hasRole, session, startEnterpriseLogin } = useAuth();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const { isLoading: flagsLoading } = useFeatureFlagsContext();
   const isAiEnabled = useFeatureFlag('AI');
@@ -38,6 +38,15 @@ const AIDeveloperRoute = () => {
             მიუწვდომელია და სწორედ ამიტომ ცარიელი გვერდი ჩნდებოდა. ადმინისტრატორის სისტემასთან მიერთების
             გარეშე დამატებითი ნაბიჯების შესრულება საჭირო არ არის.
           </p>
+          {!session ? (
+            <button
+              type="button"
+              onClick={() => void startEnterpriseLogin()}
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-500/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+            >
+              Sign in with Enterprise (Azure AD)
+            </button>
+          ) : null}
         </div>
       </div>
     );
