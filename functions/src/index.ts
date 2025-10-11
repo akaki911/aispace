@@ -8,6 +8,7 @@
  */
 import cors, { CorsOptions } from 'cors';
 import express, { Request, Response } from 'express';
+import { once } from 'events';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { onRequest } from 'firebase-functions/v2/https';
@@ -23,10 +24,25 @@ if (!admin.apps.length) {
     throw new Error('Missing GOOGLE_APPLICATION_CREDENTIALS_JSON');
   }
 
-  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(serviceAccountJson)) });
+  const parsedServiceAccount = JSON.parse(serviceAccountJson) as {
+    project_id?: string;
+  };
+
+  const configuredBucket =
+    process.env.STORAGE_BUCKET ||
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    (parsedServiceAccount.project_id ? `${parsedServiceAccount.project_id}.appspot.com` : undefined);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(parsedServiceAccount),
+    storageBucket: configuredBucket,
+  });
 }
 
+const storage = admin.storage();
+
 const SESSION_COOKIE_NAME = '__Secure-aispace_session';
+const CSRF_COOKIE_NAME = '__Secure-aispace_csrf';
 const COOKIE_DOMAIN = '.bakhmaro.co';
 const SESSION_TTL_INPUT = Number(process.env.SESSION_TTL_HOURS ?? '8');
 const SESSION_TTL_HOURS = Number.isFinite(SESSION_TTL_INPUT) && SESSION_TTL_INPUT > 0 ? SESSION_TTL_INPUT : 8;
@@ -69,6 +85,39 @@ const corsOptions: CorsOptions = {
   },
   credentials: true,
   optionsSuccessStatus: 204,
+};
+
+type AuthContext = {
+  token: admin.auth.DecodedIdToken;
+  roles: string[];
+  personalId?: string;
+};
+
+const applyStorageCorsHeaders = (res: Response) => {
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Vary', 'Origin');
+};
+
+const normaliseRoles = (claim: unknown): string[] => {
+  if (Array.isArray(claim)) {
+    return claim.filter((entry): entry is string => typeof entry === 'string');
+  }
+  if (typeof claim === 'string') {
+    return [claim];
+  }
+  return [];
+};
+
+const setAuthContext = (res: Response, token: admin.auth.DecodedIdToken, personalId?: string) => {
+  const roles = normaliseRoles((token as Record<string, unknown>).roles);
+  const context: AuthContext = { token, roles, personalId };
+  (res.locals as Record<string, unknown>).auth = context;
+};
+
+const getAuthContext = (res: Response): AuthContext | null => {
+  const locals = res.locals as Record<string, unknown> & { auth?: AuthContext };
+  return locals.auth ?? null;
 };
 
 interface RootPackageJson {
@@ -241,6 +290,65 @@ const sendRateLimitResponse = (res: Response, retryAfterMs: number) => {
   const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
   res.setHeader('Retry-After', String(retryAfterSeconds));
   res.status(429).json({ error: 'too_many_requests' });
+};
+
+const MAX_BINARY_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
+const ALLOWED_BINARY_MIME_PATTERNS = [
+  /^image\//i,
+  /^application\/pdf$/i,
+  /^application\/zip$/i,
+  /^application\/x-zip-compressed$/i,
+  /^application\/octet-stream$/i,
+];
+
+const TEXT_FILE_EXTENSIONS = ['.ts', '.tsx', '.json', '.md'];
+
+const isBinaryMimeAllowed = (mimeType: string | undefined): boolean => {
+  if (!mimeType) {
+    return false;
+  }
+  return ALLOWED_BINARY_MIME_PATTERNS.some((pattern) => pattern.test(mimeType));
+};
+
+const isTextFilePath = (path: string): boolean => {
+  const lower = path.toLowerCase();
+  return TEXT_FILE_EXTENSIONS.some((extension) => lower.endsWith(extension));
+};
+
+const isTextContentTypeHeader = (value: unknown): boolean => {
+  if (typeof value !== 'string') {
+    return false;
+  }
+  return value.startsWith('text/') || value === 'application/json';
+};
+
+const sanitizeStoragePath = (input: string | undefined | null): string => {
+  if (!input) {
+    return '';
+  }
+
+  return input
+    .split(/[\\/]+/)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment && segment !== '.' && segment !== '..')
+    .join('/');
+};
+
+const getBucket = () => storage.bucket();
+
+const hasUploadPermission = (res: Response): boolean => {
+  const context = getAuthContext(res);
+  if (!context) {
+    return false;
+  }
+
+  const privilegedRoles = new Set(['SUPER_ADMIN', 'PROVIDER', 'PROVIDER_ADMIN']);
+
+  if (context.personalId && allowedPersonalId && context.personalId === allowedPersonalId) {
+    return true;
+  }
+
+  return context.roles.some((role) => privilegedRoles.has(role));
 };
 
 apiRouter.get('/console/events', (req: Request, res: Response) => {
@@ -475,6 +583,7 @@ apiRouter.use(async (req, res, next) => {
       return;
     }
 
+    setAuthContext(res, decoded, personalId);
     next();
   } catch (error) {
     console.error('Failed to verify session cookie', error);
@@ -503,6 +612,403 @@ const requireGithubSecrets: express.RequestHandler = (_req, res, next) => {
 const githubNotImplemented: express.RequestHandler = (_req, res) => {
   res.status(501).json({ error: 'not_implemented' });
 };
+
+apiRouter.post('/files/upload', async (req: Request, res: Response) => {
+  applyStorageCorsHeaders(res);
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (!hasUploadPermission(res)) {
+    res.status(403).json({ error: 'forbidden' });
+    return;
+  }
+
+  const contentTypeHeader = req.headers['content-type'];
+  if (typeof contentTypeHeader !== 'string' || !contentTypeHeader.includes('multipart/form-data')) {
+    res.status(415).json({ error: 'invalid_content_type' });
+    return;
+  }
+
+  const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentTypeHeader);
+  const boundaryKey = boundaryMatch?.[1] ?? boundaryMatch?.[2];
+
+  if (!boundaryKey) {
+    res.status(400).json({ error: 'missing_boundary' });
+    return;
+  }
+
+  const boundary = `--${boundaryKey}`;
+  const boundaryBuffer = Buffer.from(boundary);
+  const boundaryWithLeadingCrlf = Buffer.from(`\r\n${boundary}`);
+  const closingBoundaryWithLeadingCrlf = Buffer.from(`\r\n${boundary}--`);
+  const headerSeparator = Buffer.from('\r\n\r\n');
+  const CRLF = Buffer.from('\r\n');
+  const reserveLength = Math.max(boundaryWithLeadingCrlf.length, closingBoundaryWithLeadingCrlf.length) + 8;
+
+  type UploadState = 'start' | 'headers' | 'field' | 'file' | 'finished';
+
+  let state: UploadState = 'start';
+  let buffer = Buffer.alloc(0);
+  let currentFieldName: string | null = null;
+  let pendingPath: string | undefined;
+  let fileName: string | null = null;
+  let fileContentType: string | undefined;
+  let destinationPath: string | null = null;
+  let writeStream: (NodeJS.WritableStream & { destroy?: (error?: Error) => void }) | null = null;
+  let totalBytes = 0;
+  let uploadResult: { path: string; size: number; contentType: string } | null = null;
+  let uploadError: Error | null = null;
+  let finished = false;
+
+  const bucket = getBucket();
+
+  const closeWriteStream = async () => {
+    if (!writeStream) {
+      return;
+    }
+    const stream = writeStream;
+    writeStream = null;
+    try {
+      stream.end();
+      await once(stream, 'finish');
+    } catch (streamError) {
+      console.error('Failed to finalise upload stream', streamError);
+    }
+  };
+
+  const abortProcessing = async (status: number, message: string) => {
+    if (uploadError) {
+      return;
+    }
+    uploadError = new Error(message);
+    if (writeStream) {
+      const stream = writeStream;
+      writeStream = null;
+      if (typeof stream.destroy === 'function') {
+        stream.destroy(uploadError);
+      } else {
+        stream.end();
+      }
+    }
+    if (!res.headersSent) {
+      res.status(status).json({ error: message });
+    }
+  };
+
+  const writeChunk = async (chunk: Buffer) => {
+    const stream = writeStream;
+    if (!stream || chunk.length === 0) {
+      return;
+    }
+    totalBytes += chunk.length;
+    if (totalBytes > MAX_BINARY_FILE_SIZE_BYTES) {
+      await abortProcessing(413, 'file_too_large');
+      return;
+    }
+    if (!stream.write(chunk)) {
+      await once(stream, 'drain');
+    }
+  };
+
+  const finaliseFilePart = async () => {
+    if (!writeStream || !destinationPath || !fileContentType) {
+      return;
+    }
+    await closeWriteStream();
+    uploadResult = {
+      path: destinationPath,
+      size: totalBytes,
+      contentType: fileContentType,
+    };
+    destinationPath = null;
+    fileContentType = undefined;
+    fileName = null;
+    totalBytes = 0;
+  };
+
+  req.on('aborted', () => {
+    void abortProcessing(499, 'client_closed_request');
+  });
+
+  try {
+    for await (const chunk of req) {
+      if (uploadError || finished) {
+        break;
+      }
+
+      buffer = Buffer.concat([buffer, chunk]);
+
+      let loop = true;
+      while (loop && !uploadError && !finished) {
+        if (state === 'start') {
+          if (buffer.length < boundaryBuffer.length + CRLF.length) {
+            loop = false;
+            continue;
+          }
+          if (buffer.indexOf(boundaryBuffer) !== 0) {
+            await abortProcessing(400, 'invalid_multipart_preamble');
+            break;
+          }
+          buffer = buffer.slice(boundaryBuffer.length);
+          if (buffer.slice(0, 2).equals(Buffer.from('--'))) {
+            await abortProcessing(400, 'unexpected_end_of_multipart');
+            break;
+          }
+          if (buffer.slice(0, CRLF.length).equals(CRLF)) {
+            buffer = buffer.slice(CRLF.length);
+          } else {
+            await abortProcessing(400, 'invalid_multipart_boundary');
+            break;
+          }
+          state = 'headers';
+          continue;
+        }
+
+        if (state === 'headers') {
+          const headerEndIndex = buffer.indexOf(headerSeparator);
+          if (headerEndIndex === -1) {
+            loop = false;
+            continue;
+          }
+
+          const headerSection = buffer.slice(0, headerEndIndex).toString('utf8');
+          buffer = buffer.slice(headerEndIndex + headerSeparator.length);
+
+          const dispositionMatch = /name="([^"]+)"/.exec(headerSection);
+          const filenameMatch = /filename="([^"]*)"/.exec(headerSection);
+          const contentTypeMatch = /Content-Type:\s*([^\r\n]+)/i.exec(headerSection);
+
+          currentFieldName = dispositionMatch?.[1] ?? null;
+
+          if (filenameMatch && filenameMatch[1]) {
+            fileName = filenameMatch[1];
+            fileContentType = contentTypeMatch?.[1]?.trim();
+
+            if (!fileName) {
+              await abortProcessing(400, 'missing_filename');
+              break;
+            }
+
+            if (!fileContentType || !isBinaryMimeAllowed(fileContentType)) {
+              await abortProcessing(415, 'unsupported_media_type');
+              break;
+            }
+
+            const safeSubpath = sanitizeStoragePath(pendingPath);
+            const segments = ['uploads'];
+            if (safeSubpath) {
+              segments.push(safeSubpath);
+            }
+            segments.push(fileName);
+            destinationPath = segments.join('/');
+
+            const gcsFile = bucket.file(destinationPath);
+            totalBytes = 0;
+            const gcsStream = gcsFile.createWriteStream({
+              metadata: {
+                contentType: fileContentType,
+                cacheControl: 'no-store',
+              },
+              resumable: false,
+            });
+
+            writeStream = gcsStream;
+
+            gcsStream.on('error', async (streamError) => {
+              console.error('Upload stream error', streamError);
+              await abortProcessing(500, 'upload_failed');
+            });
+
+            state = 'file';
+            continue;
+          }
+
+          state = 'field';
+          continue;
+        }
+
+        if (state === 'field') {
+          const boundaryIndex = buffer.indexOf(boundaryWithLeadingCrlf);
+          const closingIndex = buffer.indexOf(closingBoundaryWithLeadingCrlf);
+          let index = -1;
+          let isClosing = false;
+
+          if (boundaryIndex !== -1 && (closingIndex === -1 || boundaryIndex < closingIndex)) {
+            index = boundaryIndex;
+          } else if (closingIndex !== -1) {
+            index = closingIndex;
+            isClosing = true;
+          } else {
+            loop = false;
+            continue;
+          }
+
+          const valueBuffer = buffer.slice(0, index);
+          let trimmed = valueBuffer;
+          if (trimmed.length >= CRLF.length && trimmed.slice(-CRLF.length).equals(CRLF)) {
+            trimmed = trimmed.slice(0, -CRLF.length);
+          }
+          const value = trimmed.toString('utf8');
+
+          if (currentFieldName === 'path') {
+            pendingPath = value;
+          }
+
+          if (isClosing) {
+            finished = true;
+            buffer = buffer.slice(index + closingBoundaryWithLeadingCrlf.length);
+          } else {
+            buffer = buffer.slice(index + boundaryWithLeadingCrlf.length);
+            if (buffer.slice(0, CRLF.length).equals(CRLF)) {
+              buffer = buffer.slice(CRLF.length);
+            }
+            state = 'headers';
+          }
+
+          continue;
+        }
+
+        if (state === 'file') {
+          const boundaryIndex = buffer.indexOf(boundaryWithLeadingCrlf);
+          const closingIndex = buffer.indexOf(closingBoundaryWithLeadingCrlf);
+          let index = -1;
+          let isClosing = false;
+
+          if (boundaryIndex !== -1 && (closingIndex === -1 || boundaryIndex < closingIndex)) {
+            index = boundaryIndex;
+          } else if (closingIndex !== -1) {
+            index = closingIndex;
+            isClosing = true;
+          }
+
+          if (index === -1) {
+            if (buffer.length > reserveLength) {
+              const chunkToWrite = buffer.slice(0, buffer.length - reserveLength);
+              buffer = buffer.slice(buffer.length - reserveLength);
+              await writeChunk(chunkToWrite);
+            } else {
+              loop = false;
+            }
+            continue;
+          }
+
+          const dataPortion = buffer.slice(0, index);
+          let effectiveData = dataPortion;
+          if (effectiveData.length >= CRLF.length && effectiveData.slice(-CRLF.length).equals(CRLF)) {
+            effectiveData = effectiveData.slice(0, -CRLF.length);
+          }
+
+          await writeChunk(effectiveData);
+
+          buffer = buffer.slice(index + (isClosing ? closingBoundaryWithLeadingCrlf.length : boundaryWithLeadingCrlf.length));
+          await finaliseFilePart();
+
+          if (isClosing) {
+            finished = true;
+          } else {
+            if (buffer.slice(0, CRLF.length).equals(CRLF)) {
+              buffer = buffer.slice(CRLF.length);
+            }
+            state = 'headers';
+          }
+
+          continue;
+        }
+
+        if (state === 'finished') {
+          finished = true;
+          break;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to process multipart upload', error);
+    if (!uploadError) {
+      await abortProcessing(500, 'upload_failed');
+    }
+  } finally {
+    await closeWriteStream();
+  }
+
+  if (uploadError) {
+    return;
+  }
+
+  if (!uploadResult) {
+    res.status(400).json({ error: 'no_file_uploaded' });
+    return;
+  }
+
+  res.json(uploadResult);
+});
+
+apiRouter.get('/files/content/:path(*)', async (req: Request, res: Response) => {
+  applyStorageCorsHeaders(res);
+  res.setHeader('Cache-Control', 'no-store');
+
+  const pathParam = typeof req.params.path === 'string' ? req.params.path : undefined;
+  const decodedPath = pathParam ? decodeURIComponent(pathParam) : undefined;
+  const cleanPath = sanitizeStoragePath(decodedPath);
+
+  if (!cleanPath) {
+    res.status(400).json({ error: 'invalid_path' });
+    return;
+  }
+
+  const bucket = getBucket();
+  const file = bucket.file(cleanPath);
+
+  try {
+    const [metadata] = await file.getMetadata();
+    const contentType = metadata.contentType || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
+    if (typeof metadata.size === 'string') {
+      res.setHeader('Content-Length', metadata.size);
+    }
+
+    const readStream = file.createReadStream();
+    readStream.on('error', (error: NodeJS.ErrnoException) => {
+      console.error('Failed to stream file content', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'download_failed' });
+      }
+    });
+
+    readStream.pipe(res);
+  } catch (error: unknown) {
+    const firebaseError = error as { code?: number | string };
+    const codeValue = firebaseError?.code;
+    if (codeValue === 404 || codeValue === '404') {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+    console.error('Failed to load file metadata', error);
+    res.status(500).json({ error: 'download_failed' });
+  }
+});
+
+apiRouter.post('/files/save', (req: Request, res: Response) => {
+  applyStorageCorsHeaders(res);
+  res.setHeader('Cache-Control', 'no-store');
+
+  const { path, content, contentType } = (req.body ?? {}) as {
+    path?: unknown;
+    content?: unknown;
+    contentType?: unknown;
+  };
+
+  if (typeof path !== 'string' || typeof content !== 'string') {
+    res.status(400).json({ error: 'invalid_payload' });
+    return;
+  }
+
+  if (!isTextFilePath(path) || (contentType && !isTextContentTypeHeader(contentType))) {
+    res.status(415).json({ error: 'binary_not_supported' });
+    return;
+  }
+
+  res.json({ success: true, message: 'Text save accepted.' });
+});
 
 apiRouter.get('/github/tree', requireGithubSecrets, githubNotImplemented);
 apiRouter.get('/github/file', requireGithubSecrets, githubNotImplemented);

@@ -31,6 +31,18 @@ Install the following tooling before working with the repository:
 - **npm 9+** – bundled with Node 20 and used for both the Vite client and the Functions workspace.
 - **Firebase CLI** – required for local emulation and deployments (`npm install -g firebase-tools`). Run `firebase login` once to link your Google account.
 - **Git** – used for cloning the repository and pushing deployment automation changes.
+- **Git LFS** – required for checking large binary assets in/out of the repository.
+
+> ℹ️ **Large binary assets**
+>
+> Before working with design mockups or other large binary files run:
+>
+> ```bash
+> git lfs install
+> git lfs track "*.png" "*.jpg" "*.jpeg" "*.mp4" "*.zip" "*.pdf"
+> ```
+>
+> This ensures big assets are stored efficiently in Git LFS instead of bloating regular Git history.
 
 ## Installation
 

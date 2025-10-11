@@ -201,6 +201,7 @@ const AIDeveloperPanel: React.FC = () => {
     loadFile,
     saveFile,
     refreshFileTree,
+    uploadBinaryFile,
   } = useFileOperations(
     isAuthenticated,
     authUser,
@@ -1146,6 +1147,7 @@ const AIDeveloperPanel: React.FC = () => {
                         openFile={loadFile}
                         saveFile={saveFile}
                         refreshTree={refreshFileTree}
+                        uploadBinaryFile={uploadBinaryFile}
                       />
                     )}
 

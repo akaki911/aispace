@@ -1,15 +1,25 @@
-
 import React from 'react';
 import ExplorerPanel from '@/components/ExplorerPanel';
 
+interface ExplorerFileState {
+  path: string;
+  content: string;
+  lastModified: string;
+  contentType?: string;
+  blobUrl?: string | null;
+  size?: number;
+  isBinary?: boolean;
+}
+
 interface ExplorerTabProps {
   tree: any[];
-  currentFile: { path: string; content: string; lastModified: string } | null;
-  setCurrentFile: React.Dispatch<React.SetStateAction<{ path: string; content: string; lastModified: string } | null>>;
+  currentFile: ExplorerFileState | null;
+  setCurrentFile: React.Dispatch<React.SetStateAction<ExplorerFileState | null>>;
   aiFetch: (endpoint: string, options?: RequestInit) => Promise<any>;
   openFile: (path: string) => Promise<{ content: string }>;
   saveFile: (path: string, content: string) => Promise<any>;
   refreshTree: () => Promise<void> | void;
+  uploadBinaryFile: (file: File, targetPath?: string | null) => Promise<any>;
 }
 
 const ExplorerTab: React.FC<ExplorerTabProps> = ({
@@ -19,7 +29,8 @@ const ExplorerTab: React.FC<ExplorerTabProps> = ({
   aiFetch,
   openFile,
   saveFile,
-  refreshTree
+  refreshTree,
+  uploadBinaryFile,
 }) => {
   return (
     <div className="h-full bg-gradient-to-br from-[#0E1116]/90 via-[#1A1533]/90 to-[#351D6A]/90 text-[#E6E8EC]">
@@ -33,6 +44,7 @@ const ExplorerTab: React.FC<ExplorerTabProps> = ({
             openFile={openFile}
             saveFile={saveFile}
             refreshTree={refreshTree}
+            uploadBinaryFile={uploadBinaryFile}
           />
         </div>
       </div>
