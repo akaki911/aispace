@@ -30,12 +30,48 @@ const encodePath = (path: string): string =>
     .map((segment) => encodeURIComponent(segment))
     .join('/');
 
+const TEXT_FILE_EXTENSIONS = new Set(['.ts', '.tsx', '.json', '.md']);
+
+const TEXT_MIME_PREFIXES = ['text/', 'application/json'];
+
+const isTextExtension = (path: string): boolean => {
+  const lower = path.toLowerCase();
+  for (const ext of TEXT_FILE_EXTENSIONS) {
+    if (lower.endsWith(ext)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const isTextContentType = (contentType: string | null): boolean => {
+  if (!contentType) {
+    return false;
+  }
+  return TEXT_MIME_PREFIXES.some((prefix) => contentType.startsWith(prefix));
+};
+
+const getBinaryUploadPath = (path?: string | null): string | undefined => {
+  if (!path) {
+    return undefined;
+  }
+  const parts = path.split('/');
+  if (parts.length <= 1) {
+    return undefined;
+  }
+  return parts.slice(0, -1).join('/');
+};
+
 export const useFileOperations = (isAuthenticated: boolean, authUser: any) => {
   const [tree, setTree] = useState<FileTreeItem[] | null>(null);
   const [currentFile, setCurrentFile] = useState<{
     path: string;
     content: string;
     lastModified: string;
+    contentType?: string;
+    blobUrl?: string | null;
+    size?: number;
+    isBinary?: boolean;
   } | null>(null);
   const [isTreeLoading, setIsTreeLoading] = useState(false);
   const apiBase = useMemo(() => normalizeApiBase(), []);
@@ -86,15 +122,33 @@ export const useFileOperations = (isAuthenticated: boolean, authUser: any) => {
     }
 
     const contentType = response.headers.get('Content-Type');
-    const content = contentType?.includes('application/json')
-      ? JSON.stringify(await response.json(), null, 2)
-      : await response.text();
+    const isText = isTextContentType(contentType) || isTextExtension(path);
 
-    return { content };
+    if (isText) {
+      const text = await response.text();
+      return { content: text, contentType, blobUrl: null, isBinary: false };
+    }
+
+    const blob = await response.blob();
+    const blobUrl = typeof URL !== 'undefined' ? URL.createObjectURL(blob) : undefined;
+    const sizeHeader = response.headers.get('Content-Length');
+    const sizeFromHeader = sizeHeader ? Number.parseInt(sizeHeader, 10) : Number.NaN;
+
+    return {
+      content: '',
+      contentType: contentType ?? 'application/octet-stream',
+      blobUrl: blobUrl ?? null,
+      size: Number.isFinite(sizeFromHeader) ? sizeFromHeader : blob.size,
+      isBinary: true,
+    };
   }, [apiBase, isAuthenticated]);
 
   const saveFile = useCallback(async (path: string, content: string) => {
     if (!isAuthenticated) throw new Error("Authentication required");
+
+    if (!isTextExtension(path)) {
+      throw new Error('Binary files must be uploaded via Storage.');
+    }
 
     let rollbackSnapshot: typeof currentFile | null = null;
     setCurrentFile(prev => {
@@ -133,6 +187,38 @@ export const useFileOperations = (isAuthenticated: boolean, authUser: any) => {
     }
   }, [apiBase, isAuthenticated]);
 
+  const uploadBinaryFile = useCallback(
+    async (file: File, targetPath?: string | null) => {
+      if (!isAuthenticated) throw new Error('Authentication required');
+
+      if (file.size > 25 * 1024 * 1024) {
+        throw new Error('File exceeds 25MB upload limit.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+
+      const subpath = targetPath ?? getBinaryUploadPath(currentFile?.path ?? undefined);
+      if (subpath) {
+        formData.append('path', subpath);
+      }
+
+      const response = await fetch(`${apiBase}/files/upload`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || `Failed to upload file: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json().catch(() => ({ path: '', size: 0, contentType: file.type }));
+    },
+    [apiBase, currentFile?.path, isAuthenticated],
+  );
+
   return {
     tree,
     setTree,
@@ -143,6 +229,7 @@ export const useFileOperations = (isAuthenticated: boolean, authUser: any) => {
     loadFileTree,
     refreshFileTree: loadFileTree,
     loadFile,
-    saveFile
+    saveFile,
+    uploadBinaryFile,
   };
 };

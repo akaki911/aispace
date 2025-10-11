@@ -55,6 +55,27 @@
         ]
       },
       {
+        "source": "/api/files/content/**",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "https://aispace.bakhmaro.co"
+          },
+          {
+            "key": "Access-Control-Allow-Methods",
+            "value": "GET,POST,OPTIONS"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          },
+          {
+            "key": "Vary",
+            "value": "Origin"
+          }
+        ]
+      },
+      {
         "source": "/**",
         "headers": [
           {
